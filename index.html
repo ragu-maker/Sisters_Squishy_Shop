@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Squishy POS & Inventory Manager</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Google Fonts: Fredoka & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Fredoka', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              200: '#fecdd3',
+              300: '#fda4af',
+              400: '#fb7185',
+              500: '#f43f5e',
+              600: '#e11d48',
+            },
+            accent: {
+              light: '#e0f2fe',
+              DEFAULT: '#38bdf8',
+              dark: '#0284c7',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    h1, h2, h3, .font-display {
+      font-family: 'Fredoka', sans-serif;
+    }
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+  <!-- TOP NAV BAR -->
+  <header class="bg-white border-b border-pink-100 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <!-- Logo -->
+        <div class="flex items-center space-x-3">
+          <div class="bg-gradient-to-tr from-pink-400 to-rose-400 text-white p-2.5 rounded-2xl shadow-md shadow-pink-200">
+            <i class="fa-solid font-bold fa-cloud-bounce text-xl"></i>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-pink-600 tracking-wide">Squishy HQ</h1>
+            <p class="text-xs text-slate-400 -mt-1 font-medium">POS & Inventory Tracker</p>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex space-x-1 sm:space-x-2 bg-slate-100 p-1 rounded-2xl">
+          <button id="nav-pos" onclick="switchTab('pos')" class="flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 bg-white text-pink-600 shadow-sm">
+            <i class="fa-solid fa-cash-register"></i>
+            <span class="hidden sm:inline">Register</span>
+          </button>
+          <button id="nav-inventory" onclick="switchTab('inventory')" class="flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900">
+            <i class="fa-solid fa-boxes-stacked"></i>
+            <span class="hidden sm:inline">Inventory</span>
+          </button>
+          <button id="nav-bundle" onclick="switchTab('bundle')" class="flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900">
+            <i class="fa-solid fa-calculator"></i>
+            <span class="hidden sm:inline">Bundle Allocator</span>
+          </button>
+          <button id="nav-analytics" onclick="switchTab('analytics')" class="flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900">
+            <i class="fa-solid fa-chart-pie"></i>
+            <span class="hidden sm:inline">Sales & Reports</span>
+          </button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ==================== TAB 1: POS REGISTER ==================== -->
+    <section id="tab-pos" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- LEFT: Catalog / Items Grid (7/12) -->
+      <div class="lg:col-span-7 xl:col-span-8 flex flex-col space-y-4">
+        <!-- Search Bar & Filters -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row gap-3">
+          <div class="relative flex-1">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+            <input type="text" id="pos-search" oninput="renderPosGrid()" placeholder="Search squishies by name..." class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400 focus:bg-white transition-all">
+          </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div id="pos-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-[calc(100vh-250px)] overflow-y-auto pr-1">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- RIGHT: Current Ticket / Cart (5/12) -->
+      <div class="lg:col-span-5 xl:col-span-4 bg-white rounded-3xl shadow-md border border-pink-100 flex flex-col h-[calc(100vh-140px)] sticky top-20">
+        <!-- Ticket Header -->
+        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-pink-50/50 rounded-t-3xl">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-receipt text-pink-500"></i>
+            <h2 class="font-bold text-lg text-slate-800">Current Order</h2>
+          </div>
+          <button onclick="clearCart()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold px-2 py-1 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors">
+            Clear All
+          </button>
+        </div>
+
+        <!-- Cart Items List -->
+        <div id="cart-list" class="flex-1 overflow-y-auto p-4 space-y-3">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Ticket Summary & Checkout -->
+        <div class="p-4 border-t border-slate-100 bg-slate-50/50 rounded-b-3xl space-y-3">
+          <!-- Subtotal & Total -->
+          <div class="space-y-1.5 text-sm">
+            <div class="flex justify-between items-center text-slate-800 pt-1 text-lg font-bold">
+              <span>Total Due</span>
+              <span id="cart-total" class="text-pink-600 text-xl font-display">$0.00</span>
+            </div>
+          </div>
+
+          <!-- Checkout Button -->
+          <button onclick="openPaymentModal()" id="checkout-btn" disabled class="w-full py-3.5 bg-pink-500 hover:bg-pink-600 disabled:bg-slate-200 disabled:cursor-not-allowed text-white font-bold rounded-2xl shadow-lg shadow-pink-200 transition-all flex items-center justify-center space-x-2 text-base">
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Pay Now</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 2: INVENTORY MANAGEMENT ==================== -->
+    <section id="tab-inventory" class="hidden space-y-6">
+      <!-- Header Actions -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800">Product Inventory</h2>
+          <p class="text-sm text-slate-500">Manage products, update stock levels, and set prices.</p>
+        </div>
+        <button onclick="openProductModal()" class="px-5 py-2.5 bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-2xl shadow-md shadow-pink-200 transition-all flex items-center space-x-2">
+          <i class="fa-solid fa-plus"></i>
+          <span>Add New Product</span>
+        </button>
+      </div>
+
+      <!-- Inventory Grid -->
+      <div id="inventory-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Dynamically populated -->
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: BUNDLE COST ALLOCATOR ==================== -->
+    <section id="tab-bundle" class="hidden max-w-4xl mx-auto space-y-6">
+      <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+        <div>
+          <div class="flex items-center space-x-3 mb-1">
+            <div class="bg-amber-100 text-amber-600 p-2 rounded-xl">
+              <i class="fa-solid fa-boxes-packing text-xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-800">Variety Bundle Cost Allocator</h2>
+          </div>
+          <p class="text-slate-500 text-sm">
+            Bought a box or bundle of assorted squishies? Enter the total purchase price below to calculate and automatically split the cost across individual items based on weight or equal distribution.
+          </p>
+        </div>
+
+        <!-- Step 1: Total Bundle Price -->
+        <div class="bg-amber-50/50 border border-amber-100 p-5 rounded-2xl space-y-3">
+          <label class="block text-sm font-semibold text-amber-900">1. Enter Total Cost Paid for Bundle ($)</label>
+          <div class="relative max-w-xs">
+            <span class="absolute left-4 top-3 text-slate-400 font-bold">$</span>
+            <input type="number" step="0.01" id="bundle-total-cost" placeholder="0.00" oninput="calculateBundleAllocation()" class="w-full pl-8 pr-4 py-2.5 bg-white border border-amber-200 rounded-xl text-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400">
+          </div>
+        </div>
+
+        <!-- Step 2: Select Products -->
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <label class="block text-sm font-semibold text-slate-700">2. Select Included Products & Weights</label>
+            <div class="space-x-2">
+              <button onclick="setBundleWeightsEqual()" class="text-xs font-semibold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg transition-colors">
+                Set Equal Weights
+              </button>
+            </div>
+          </div>
+
+          <div id="bundle-items-list" class="space-y-3 max-h-80 overflow-y-auto pr-1">
+            <!-- Dynamically populated product list rows -->
+          </div>
+        </div>
+
+        <!-- Step 3: Allocation Summary & Apply -->
+        <div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-4">
+          <div class="flex justify-between items-center text-sm">
+            <span class="font-medium text-slate-600">Total Allocated Cost:</span>
+            <span id="bundle-allocated-sum" class="font-bold text-slate-800">$0.00</span>
+          </div>
+
+          <button onclick="applyBundleCosts()" class="w-full py-3.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md shadow-amber-200 transition-all flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>Update Unit Costs in Inventory</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 4: SALES & ANALYTICS ==================== -->
+    <section id="tab-analytics" class="hidden space-y-6">
+      <!-- Metrics Overview Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center space-x-4">
+          <div class="p-3.5 bg-emerald-100 text-emerald-600 rounded-2xl">
+            <i class="fa-solid fa-dollar-sign text-2xl"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Revenue</p>
+            <h3 id="stat-revenue" class="text-2xl font-bold text-slate-800">$0.00</h3>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center space-x-4">
+          <div class="p-3.5 bg-blue-100 text-blue-600 rounded-2xl">
+            <i class="fa-solid fa-chart-line text-2xl"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Net Profit</p>
+            <h3 id="stat-profit" class="text-2xl font-bold text-slate-800">$0.00</h3>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center space-x-4">
+          <div class="p-3.5 bg-purple-100 text-purple-600 rounded-2xl">
+            <i class="fa-solid fa-bag-shopping text-2xl"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Squishies Sold</p>
+            <h3 id="stat-items-sold" class="text-2xl font-bold text-slate-800">0</h3>
+          </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex items-center space-x-4">
+          <div class="p-3.5 bg-pink-100 text-pink-600 rounded-2xl">
+            <i class="fa-solid fa-receipt text-2xl"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Orders</p>
+            <h3 id="stat-orders-count" class="text-2xl font-bold text-slate-800">0</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Profit & Payout Tracker Section -->
+      <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800">Daily Profit & Payout Tracker</h3>
+            <p class="text-xs text-slate-500">Track net profits day-by-day and mark when earnings are distributed to your daughter.</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-slate-100 text-slate-400 font-semibold text-xs uppercase">
+                <th class="py-3 px-3">Date</th>
+                <th class="py-3 px-3">Sales</th>
+                <th class="py-3 px-3">COGS (Cost)</th>
+                <th class="py-3 px-3">Net Profit</th>
+                <th class="py-3 px-3">Payout Status</th>
+                <th class="py-3 px-3 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="daily-payouts-body" class="divide-y divide-slate-50">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sales Table & Top Sellers -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Sales History List (2 cols) -->
+        <div class="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+          <div class="flex justify-between items-center">
+            <h3 class="text-lg font-bold text-slate-800">Recent Transactions</h3>
+            <button onclick="clearSalesHistory()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold px-2.5 py-1 bg-rose-50 rounded-lg">Clear History</button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="border-b border-slate-100 text-slate-400 font-semibold text-xs uppercase">
+                  <th class="py-3 px-2">Date</th>
+                  <th class="py-3 px-2">Method</th>
+                  <th class="py-3 px-2">Items</th>
+                  <th class="py-3 px-2">Total</th>
+                  <th class="py-3 px-2">Profit</th>
+                </tr>
+              </thead>
+              <tbody id="sales-history-body" class="divide-y divide-slate-50">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Top Sellers (1 col) -->
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 space-y-4">
+          <h3 class="text-lg font-bold text-slate-800">Top Selling Squishies</h3>
+          <div id="top-sellers-list" class="space-y-3">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- ADD / EDIT PRODUCT MODAL -->
+  <div id="modal-product" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div class="p-6 bg-pink-50 border-b border-pink-100 flex justify-between items-center">
+        <h3 id="modal-product-title" class="text-xl font-bold text-pink-600">Add New Product</h3>
+        <button onclick="closeProductModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="product-form" onsubmit="saveProduct(event)" class="p-6 space-y-4">
+        <input type="hidden" id="prod-id" />
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Product Name</label>
+          <input type="text" id="prod-name" required placeholder="e.g., Strawberry Bear" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Description</label>
+          <input type="text" id="prod-desc" placeholder="e.g., Soft slow-rising foam with sweet scent" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Sell Price ($)</label>
+            <input type="number" step="0.01" id="prod-price" required placeholder="5.00" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Unit Cost ($)</label>
+            <input type="number" step="0.01" id="prod-cost" required placeholder="1.50" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Stock Quantity</label>
+            <input type="number" id="prod-stock" required placeholder="10" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
+          </div>
+        </div>
+
+        <!-- Product Image (URL or Upload) -->
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Product Image</label>
+          <div class="space-y-2">
+            <input type="text" id="prod-img-url" placeholder="Paste Image URL..." onchange="handleImageUrlInput()" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-pink-400">
+            <div class="text-center text-xs text-slate-400 font-semibold">- OR -</div>
+            <input type="file" id="prod-img-file" accept="image/*" onchange="handleFileUpload(event)" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pink-50 file:text-pink-600 hover:file:bg-pink-100 cursor-pointer">
+          </div>
+          <!-- Preview Image -->
+          <div class="mt-3 flex justify-center">
+            <img id="prod-img-preview" src="" alt="Preview" class="h-24 w-24 object-cover rounded-2xl border border-slate-200 hidden shadow-sm">
+          </div>
+        </div>
+
+        <div class="pt-4 flex justify-end space-x-3 border-t border-slate-100">
+          <button type="button" onclick="closeProductModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-semibold">Cancel</button>
+          <button type="submit" class="px-6 py-2.5 rounded-xl bg-pink-500 hover:bg-pink-600 text-white text-sm font-bold shadow-md shadow-pink-200">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- PAYMENT MODAL -->
+  <div id="modal-payment" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-3xl shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
+      <div class="p-5 bg-slate-900 text-white flex justify-between items-center">
+        <div>
+          <h3 class="text-lg font-bold">Checkout</h3>
+          <p class="text-xs text-slate-400">Total Due: <span id="payment-due-amount" class="text-pink-400 font-bold">$0.00</span></p>
+        </div>
+        <button onclick="closePaymentModal()" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Payment Method Tabs -->
+      <div class="p-6 space-y-6">
+        <div class="grid grid-cols-3 gap-2">
+          <button type="button" onclick="selectPaymentMethod('cash')" id="pay-tab-cash" class="py-2.5 px-3 rounded-2xl border-2 border-pink-500 bg-pink-50 text-pink-600 font-bold text-xs flex flex-col items-center justify-center space-y-1">
+            <i class="fa-solid fa-money-bill-wave text-lg"></i>
+            <span>Cash</span>
+          </button>
+          <button type="button" onclick="selectPaymentMethod('venmo')" id="pay-tab-venmo" class="py-2.5 px-3 rounded-2xl border-2 border-slate-100 text-slate-500 font-bold text-xs flex flex-col items-center justify-center space-y-1 hover:border-slate-200">
+            <i class="fa-brands fa-vimeo text-lg"></i>
+            <span>Venmo</span>
+          </button>
+          <button type="button" onclick="selectPaymentMethod('zelle')" id="pay-tab-zelle" class="py-2.5 px-3 rounded-2xl border-2 border-slate-100 text-slate-500 font-bold text-xs flex flex-col items-center justify-center space-y-1 hover:border-slate-200">
+            <i class="fa-solid fa-mobile-screen-button text-lg"></i>
+            <span>Zelle</span>
+          </button>
+        </div>
+
+        <!-- CASH VIEW -->
+        <div id="pay-view-cash" class="space-y-4">
+          <label class="block text-xs font-bold text-slate-600 uppercase">Cash Tendered</label>
+          <!-- Preset Buttons -->
+          <div class="grid grid-cols-4 gap-2">
+            <button onclick="setCashTender(5)" class="py-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-sm">$5</button>
+            <button onclick="setCashTender(10)" class="py-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-sm">$10</button>
+            <button onclick="setCashTender(20)" class="py-2 bg-slate-100 hover:bg-slate-200 rounded-xl font-bold text-sm">$20</button>
+            <button onclick="setCashExact()" class="py-2 bg-pink-100 hover:bg-pink-200 text-pink-700 rounded-xl font-bold text-xs">Exact</button>
+          </div>
+
+          <div class="relative">
+            <span class="absolute left-4 top-3 text-slate-400 font-bold">$</span>
+            <input type="number" step="0.01" id="cash-tendered" oninput="calculateChange()" placeholder="0.00" class="w-full pl-8 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-lg font-bold focus:outline-none focus:ring-2 focus:ring-pink-400">
+          </div>
+
+          <!-- Change Calculation Display -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex justify-between items-center">
+            <span class="text-sm font-bold text-emerald-800">Change Due:</span>
+            <span id="cash-change-due" class="text-2xl font-bold text-emerald-600 font-display">$0.00</span>
+          </div>
+        </div>
+
+        <!-- VENMO VIEW -->
+        <div id="pay-view-venmo" class="hidden space-y-4 text-center">
+          <div class="p-4 bg-blue-50 border border-blue-100 rounded-2xl space-y-3">
+            <div id="venmo-qr-container" class="w-40 h-40 mx-auto bg-white p-2 rounded-xl border border-blue-200 shadow-inner flex items-center justify-center">
+              <img id="venmo-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://venmo.com" alt="Venmo QR" class="w-full h-full object-contain">
+            </div>
+            <p id="venmo-handle-display" class="font-bold text-blue-700 text-sm">@SquishyBusiness</p>
+            <p class="text-xs text-slate-500">Scan QR code using Venmo app to pay</p>
+          </div>
+        </div>
+
+        <!-- ZELLE VIEW -->
+        <div id="pay-view-zelle" class="hidden space-y-4 text-center">
+          <div class="p-4 bg-purple-50 border border-purple-100 rounded-2xl space-y-3">
+            <div id="zelle-qr-container" class="w-40 h-40 mx-auto bg-white p-2 rounded-xl border border-purple-200 shadow-inner flex items-center justify-center">
+              <img id="zelle-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ZellePayment" alt="Zelle QR" class="w-full h-full object-contain">
+            </div>
+            <p id="zelle-info-display" class="font-bold text-purple-700 text-sm">orders@squishybiz.com</p>
+            <p class="text-xs text-slate-500">Send Zelle payment to email or scan QR</p>
+          </div>
+        </div>
+
+        <!-- Complete Button -->
+        <button onclick="completeSale()" id="complete-sale-btn" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-2xl shadow-lg shadow-emerald-200 transition-all text-base flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>Complete Transaction</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APP JAVASCRIPT LOGIC -->
+  <script>
+    // Global Application State
+    let products = [];
+    let cart = []; // [{ id, name, price, cost, qty }]
+    let salesHistory = [];
+    let dailyPayouts = {}; // { 'YYYY-MM-DD': { distributed: boolean, timestamp: string } }
+    let activePaymentMethod = 'cash';
+
+    // Default Sample Data
+    const defaultProducts = [
+      { id: '1', name: 'Strawberry Bear', description: 'Soft slow-rising scented bear', price: 6.00, cost: 2.00, stock: 12, image: 'https://placehold.co/150x150/fee2e2/f43f5e?text=Bear' },
+      { id: '2', name: 'Kawaii Bunny', description: 'Super squishy pastel bunny', price: 5.50, cost: 1.80, stock: 8, image: 'https://placehold.co/150x150/e0f2fe/0284c7?text=Bunny' },
+      { id: '3', name: 'Rainbow Unicorn', description: 'Sparkly horn mega squishy', price: 8.00, cost: 3.00, stock: 5, image: 'https://placehold.co/150x150/f3e8ff/9333ea?text=Unicorn' },
+      { id: '4', name: 'Cat Paw', description: 'Soft squishy paw pad', price: 4.50, cost: 1.20, stock: 15, image: 'https://placehold.co/150x150/fef3c7/d97706?text=Cat+Paw' }
+    ];
+
+    // Initialize on window load
+    window.onload = function() {
+      loadLocalStorage();
+      switchTab('pos');
+    };
+
+    // --- LOCAL STORAGE HELPERS ---
+    function loadLocalStorage() {
+      const savedProducts = localStorage.getItem('squishy_products');
+      products = savedProducts ? JSON.parse(savedProducts) : [...defaultProducts];
+
+      const savedSales = localStorage.getItem('squishy_sales');
+      salesHistory = savedSales ? JSON.parse(savedSales) : [];
+
+      const savedPayouts = localStorage.getItem('squishy_payouts');
+      dailyPayouts = savedPayouts ? JSON.parse(savedPayouts) : {};
+    }
+
+    function saveLocalStorage() {
+      localStorage.setItem('squishy_products', JSON.stringify(products));
+      localStorage.setItem('squishy_sales', JSON.stringify(salesHistory));
+      localStorage.setItem('squishy_payouts', JSON.stringify(dailyPayouts));
+    }
+
+    // --- NAVIGATION TABS ---
+    function switchTab(tabName) {
+      const tabs = ['pos', 'inventory', 'bundle', 'analytics'];
+      tabs.forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        const navBtn = document.getElementById(`nav-${t}`);
+        navBtn.className = "flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-600 hover:text-slate-900";
+      });
+
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+      const activeBtn = document.getElementById(`nav-${tabName}`);
+      activeBtn.className = "flex items-center space-x-2 px-3 sm:px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200 bg-white text-pink-600 shadow-sm";
+
+      if(tabName === 'inventory') renderInventoryGrid();
+      if(tabName === 'bundle') renderBundleItems();
+      if(tabName === 'analytics') renderAnalytics();
+      if(tabName === 'pos') renderPosGrid();
+    }
+
+    // --- POS REGISTER LOGIC ---
+    function renderPosGrid() {
+      const grid = document.getElementById('pos-grid');
+      const search = document.getElementById('pos-search').value.toLowerCase();
+      grid.innerHTML = '';
+
+      const filtered = products.filter(p => p.name.toLowerCase().includes(search));
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400 font-medium">No squishies found</div>`;
+        return;
+      }
+
+      filtered.forEach(p => {
+        const isOut = p.stock <= 0;
+        const card = document.createElement('div');
+        card.className = `bg-white rounded-2xl border border-slate-100 p-3 shadow-sm hover:shadow-md transition-all cursor-pointer flex flex-col justify-between select-none ${isOut ? 'opacity-50 pointer-events-none' : ''}`;
+        card.onclick = () => addToCart(p.id);
+
+        card.innerHTML = `
+          <div class="relative mb-2">
+            <img src="${p.image || 'https://placehold.co/150x150/fee2e2/f43f5e?text=Squishy'}" onerror="this.src='https://placehold.co/150x150/fee2e2/f43f5e?text=Squishy'" class="w-full h-28 object-cover rounded-xl">
+            <span class="absolute top-2 right-2 px-2 py-0.5 rounded-full text-xs font-bold ${p.stock <= 3 ? 'bg-amber-500 text-white' : 'bg-slate-900/60 text-white'} backdrop-blur-sm">
+              ${isOut ? 'OUT' : p.stock + ' left'}
+            </span>
+          </div>
+          <div>
+            <h4 class="font-bold text-slate-800 text-sm truncate">${p.name}</h4>
+            <p class="text-xs text-slate-400 truncate mb-2">${p.description || ''}</p>
+          </div>
+          <div class="flex justify-between items-center pt-1 border-t border-slate-50">
+            <span class="font-bold text-pink-600 text-base">$${parseFloat(p.price).toFixed(2)}</span>
+            <span class="w-7 h-7 bg-pink-50 text-pink-600 rounded-lg flex items-center justify-center font-bold text-xs hover:bg-pink-500 hover:text-white transition-colors">
+              <i class="fa-solid fa-plus"></i>
+            </span>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function addToCart(productId) {
+      const prod = products.find(p => p.id === productId);
+      if(!prod || prod.stock <= 0) return;
+
+      const cartItem = cart.find(c => c.id === productId);
+      if(cartItem) {
+        if(cartItem.qty < prod.stock) {
+          cartItem.qty++;
+        }
+      } else {
+        cart.push({
+          id: prod.id,
+          name: prod.name,
+          price: parseFloat(prod.price),
+          cost: parseFloat(prod.cost || 0),
+          qty: 1
+        });
+      }
+      renderCart();
+    }
+
+    function updateCartQty(productId, delta) {
+      const cartItem = cart.find(c => c.id === productId);
+      const prod = products.find(p => p.id === productId);
+      if(!cartItem) return;
+
+      cartItem.qty += delta;
+
+      if(cartItem.qty > prod.stock) {
+        cartItem.qty = prod.stock;
+      }
+
+      if(cartItem.qty <= 0) {
+        cart = cart.filter(c => c.id !== productId);
+      }
+      renderCart();
+    }
+
+    function clearCart() {
+      cart = [];
+      renderCart();
+    }
+
+    function renderCart() {
+      const list = document.getElementById('cart-list');
+      list.innerHTML = '';
+
+      if(cart.length === 0) {
+        list.innerHTML = `
+          <div class="h-full flex flex-col items-center justify-center text-slate-300 py-12">
+            <i class="fa-solid fa-basket-shopping text-4xl mb-2"></i>
+            <p class="text-sm font-medium">Cart is empty</p>
+          </div>
+        `;
+        document.getElementById('checkout-btn').disabled = true;
+      } else {
+        document.getElementById('checkout-btn').disabled = false;
+        cart.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'flex justify-between items-center bg-slate-50 p-2.5 rounded-2xl border border-slate-100';
+          row.innerHTML = `
+            <div class="flex-1 pr-2">
+              <h5 class="font-bold text-slate-800 text-xs truncate">${item.name}</h5>
+              <p class="text-xs text-pink-600 font-semibold">$${(item.price * item.qty).toFixed(2)}</p>
+            </div>
+            <div class="flex items-center space-x-2 bg-white px-2 py-1 rounded-xl border border-slate-200">
+              <button onclick="updateCartQty('${item.id}', -1)" class="text-slate-400 hover:text-rose-500 font-bold px-1 text-xs">-</button>
+              <span class="text-xs font-bold text-slate-700 w-4 text-center">${item.qty}</span>
+              <button onclick="updateCartQty('${item.id}', 1)" class="text-slate-400 hover:text-emerald-500 font-bold px-1 text-xs">+</button>
+            </div>
+          `;
+          list.appendChild(row);
+        });
+      }
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      document.getElementById('cart-total').innerText = `$${total.toFixed(2)}`;
+    }
+
+    // --- PAYMENT FLOW ---
+    function openPaymentModal() {
+      if(cart.length === 0) return;
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+      document.getElementById('payment-due-amount').innerText = `$${total.toFixed(2)}`;
+      document.getElementById('modal-payment').classList.remove('hidden');
+      selectPaymentMethod('cash');
+      setCashExact();
+    }
+
+    function closePaymentModal() {
+      document.getElementById('modal-payment').classList.add('hidden');
+    }
+
+    function selectPaymentMethod(method) {
+      activePaymentMethod = method;
+      const methods = ['cash', 'venmo', 'zelle'];
+      methods.forEach(m => {
+        document.getElementById(`pay-view-${m}`).classList.add('hidden');
+        document.getElementById(`pay-tab-${m}`).className = "py-2.5 px-3 rounded-2xl border-2 border-slate-100 text-slate-500 font-bold text-xs flex flex-col items-center justify-center space-y-1 hover:border-slate-200";
+      });
+
+      document.getElementById(`pay-view-${method}`).classList.remove('hidden');
+      document.getElementById(`pay-tab-${method}`).className = "py-2.5 px-3 rounded-2xl border-2 border-pink-500 bg-pink-50 text-pink-600 font-bold text-xs flex flex-col items-center justify-center space-y-1";
+    }
+
+    function setCashTender(amount) {
+      document.getElementById('cash-tendered').value = amount;
+      calculateChange();
+    }
+
+    function setCashExact() {
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      document.getElementById('cash-tendered').value = total.toFixed(2);
+      calculateChange();
+    }
+
+    function calculateChange() {
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const tendered = parseFloat(document.getElementById('cash-tendered').value) || 0;
+      
+      const change = tendered - total;
+      const changeEl = document.getElementById('cash-change-due');
+      changeEl.innerText = `$${Math.max(0, change).toFixed(2)}`;
+    }
+
+    function completeSale() {
+      const grandTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const totalCost = cart.reduce((sum, item) => sum + (item.cost * item.qty), 0);
+      const profit = grandTotal - totalCost;
+
+      const order = {
+        id: 'ORD-' + Date.now().toString().slice(-6),
+        timestamp: new Date().toISOString(),
+        items: [...cart],
+        grandTotal: grandTotal,
+        cost: totalCost,
+        profit: profit,
+        paymentMethod: activePaymentMethod.toUpperCase()
+      };
+
+      cart.forEach(item => {
+        const prod = products.find(p => p.id === item.id);
+        if(prod) {
+          prod.stock = Math.max(0, prod.stock - item.qty);
+        }
+      });
+
+      salesHistory.unshift(order);
+      saveLocalStorage();
+
+      cart = [];
+      closePaymentModal();
+      renderCart();
+      renderPosGrid();
+    }
+
+    // --- INVENTORY MANAGEMENT LOGIC ---
+    let editingProductId = null;
+    let tempImageBase64 = '';
+
+    function renderInventoryGrid() {
+      const grid = document.getElementById('inventory-grid');
+      grid.innerHTML = '';
+
+      if(products.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">No products in inventory.</div>`;
+        return;
+      }
+
+      products.forEach(p => {
+        const card = document.createElement('div');
+        card.className = "bg-white rounded-3xl border border-slate-100 p-4 shadow-sm flex flex-col justify-between";
+        card.innerHTML = `
+          <div>
+            <div class="relative mb-3">
+              <img src="${p.image || 'https://placehold.co/200x200/fee2e2/f43f5e?text=Squishy'}" onerror="this.src='https://placehold.co/200x200/fee2e2/f43f5e?text=Squishy'" class="w-full h-36 object-cover rounded-2xl">
+              <span class="absolute top-2 right-2 px-2.5 py-1 rounded-full text-xs font-bold ${p.stock <= 3 ? 'bg-amber-500 text-white' : 'bg-slate-900/60 text-white'} backdrop-blur-sm">
+                ${p.stock} in stock
+              </span>
+            </div>
+            <h4 class="font-bold text-slate-800 text-base mb-1">${p.name}</h4>
+            <p class="text-xs text-slate-500 line-clamp-2 mb-3">${p.description || 'No description'}</p>
+            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-50 p-2.5 rounded-2xl mb-3">
+              <div>
+                <span class="text-slate-400 block font-medium">Price</span>
+                <span class="font-bold text-pink-600 text-sm">$${parseFloat(p.price).toFixed(2)}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block font-medium">Cost</span>
+                <span class="font-bold text-slate-700 text-sm">$${parseFloat(p.cost || 0).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+          <div class="flex space-x-2 pt-2 border-t border-slate-100">
+            <button onclick="editProduct('${p.id}')" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors">
+              <i class="fa-solid fa-pen mr-1"></i> Edit
+            </button>
+            <button onclick="deleteProduct('${p.id}')" class="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold rounded-xl text-xs transition-colors">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openProductModal(productId = null) {
+      editingProductId = productId;
+      tempImageBase64 = '';
+      const modal = document.getElementById('modal-product');
+      const title = document.getElementById('modal-product-title');
+      const preview = document.getElementById('prod-img-preview');
+
+      if(productId) {
+        title.innerText = 'Edit Product';
+        const p = products.find(item => item.id === productId);
+        if(p) {
+          document.getElementById('prod-id').value = p.id;
+          document.getElementById('prod-name').value = p.name;
+          document.getElementById('prod-desc').value = p.description || '';
+          document.getElementById('prod-price').value = p.price;
+          document.getElementById('prod-cost').value = p.cost || 0;
+          document.getElementById('prod-stock').value = p.stock;
+          document.getElementById('prod-img-url').value = p.image && !p.image.startsWith('data:') ? p.image : '';
+          
+          if(p.image) {
+            preview.src = p.image;
+            preview.classList.remove('hidden');
+            tempImageBase64 = p.image;
+          } else {
+            preview.classList.add('hidden');
+          }
+        }
+      } else {
+        title.innerText = 'Add New Product';
+        document.getElementById('product-form').reset();
+        document.getElementById('prod-id').value = '';
+        preview.classList.add('hidden');
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeProductModal() {
+      document.getElementById('modal-product').classList.add('hidden');
+    }
+
+    function handleImageUrlInput() {
+      const url = document.getElementById('prod-img-url').value;
+      const preview = document.getElementById('prod-img-preview');
+      if(url) {
+        tempImageBase64 = url;
+        preview.src = url;
+        preview.classList.remove('hidden');
+      }
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if(!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        tempImageBase64 = e.target.result;
+        const preview = document.getElementById('prod-img-preview');
+        preview.src = tempImageBase64;
+        preview.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function saveProduct(event) {
+      event.preventDefault();
+      const id = document.getElementById('prod-id').value || 'PRD-' + Date.now().toString().slice(-6);
+      const name = document.getElementById('prod-name').value;
+      const description = document.getElementById('prod-desc').value;
+      const price = parseFloat(document.getElementById('prod-price').value) || 0;
+      const cost = parseFloat(document.getElementById('prod-cost').value) || 0;
+      const stock = parseInt(document.getElementById('prod-stock').value) || 0;
+      const image = tempImageBase64 || 'https://placehold.co/200x200/fee2e2/f43f5e?text=Squishy';
+
+      const existingIndex = products.findIndex(p => p.id === id);
+      if(existingIndex >= 0) {
+        products[existingIndex] = { id, name, description, price, cost, stock, image };
+      } else {
+        products.push({ id, name, description, price, cost, stock, image });
+      }
+
+      saveLocalStorage();
+      closeProductModal();
+      renderInventoryGrid();
+    }
+
+    function editProduct(id) {
+      openProductModal(id);
+    }
+
+    function deleteProduct(id) {
+      if(confirm("Are you sure you want to delete this product?")) {
+        products = products.filter(p => p.id !== id);
+        saveLocalStorage();
+        renderInventoryGrid();
+      }
+    }
+
+    // --- BUNDLE COST ALLOCATOR LOGIC ---
+    let bundleItemsState = [];
+
+    function renderBundleItems() {
+      const container = document.getElementById('bundle-items-list');
+      container.innerHTML = '';
+
+      if(products.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400">No products available. Add products in inventory first.</p>`;
+        return;
+      }
+
+      if(bundleItemsState.length === 0) {
+        bundleItemsState = products.map(p => ({ id: p.id, name: p.name, qtyCount: 1, weight: 1 }));
+      }
+
+      bundleItemsState.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = "flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200 gap-3";
+        row.innerHTML = `
+          <div class="flex-1">
+            <h4 class="font-bold text-xs text-slate-800">${item.name}</h4>
+            <span id="bundle-item-result-${item.id}" class="text-[11px] text-amber-600 font-semibold">Allocated Unit Cost: $0.00</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <div class="text-right">
+              <label class="block text-[10px] text-slate-400 uppercase font-bold">Quantity</label>
+              <input type="number" min="0" value="${item.qtyCount}" onchange="updateBundleItemProp('${item.id}', 'qtyCount', this.value)" class="w-16 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-center">
+            </div>
+            <div class="text-right">
+              <label class="block text-[10px] text-slate-400 uppercase font-bold">Weight Factor</label>
+              <input type="number" step="0.1" min="0.1" value="${item.weight}" onchange="updateBundleItemProp('${item.id}', 'weight', this.value)" class="w-16 px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-center">
+            </div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+      calculateBundleAllocation();
+    }
+
+    function updateBundleItemProp(id, prop, val) {
+      const item = bundleItemsState.find(i => i.id === id);
+      if(item) {
+        item[prop] = parseFloat(val) || 0;
+        calculateBundleAllocation();
+      }
+    }
+
+    function setBundleWeightsEqual() {
+      bundleItemsState.forEach(i => i.weight = 1);
+      renderBundleItems();
+    }
+
+    function calculateBundleAllocation() {
+      const totalCostInput = parseFloat(document.getElementById('bundle-total-cost').value) || 0;
+      
+      let totalWeightUnits = 0;
+      bundleItemsState.forEach(i => {
+        totalWeightUnits += (i.qtyCount * i.weight);
+      });
+
+      let allocatedSum = 0;
+      bundleItemsState.forEach(i => {
+        const itemTotalUnits = i.qtyCount * i.weight;
+        const itemShare = totalWeightUnits > 0 ? (itemTotalUnits / totalWeightUnits) * totalCostInput : 0;
+        const unitCost = i.qtyCount > 0 ? itemShare / i.qtyCount : 0;
+
+        allocatedSum += itemShare;
+
+        const resEl = document.getElementById(`bundle-item-result-${i.id}`);
+        if(resEl) {
+          resEl.innerText = `Allocated Unit Cost: $${unitCost.toFixed(2)}`;
+        }
+      });
+
+      document.getElementById('bundle-allocated-sum').innerText = `$${allocatedSum.toFixed(2)}`;
+    }
+
+    function applyBundleCosts() {
+      const totalCostInput = parseFloat(document.getElementById('bundle-total-cost').value) || 0;
+      if(totalCostInput <= 0) {
+        alert('Please enter a valid total bundle cost.');
+        return;
+      }
+
+      let totalWeightUnits = 0;
+      bundleItemsState.forEach(i => {
+        totalWeightUnits += (i.qtyCount * i.weight);
+      });
+
+      bundleItemsState.forEach(i => {
+        const itemTotalUnits = i.qtyCount * i.weight;
+        const itemShare = totalWeightUnits > 0 ? (itemTotalUnits / totalWeightUnits) * totalCostInput : 0;
+        const unitCost = i.qtyCount > 0 ? itemShare / i.qtyCount : 0;
+
+        const prod = products.find(p => p.id === i.id);
+        if(prod && i.qtyCount > 0) {
+          prod.cost = parseFloat(unitCost.toFixed(2));
+          prod.stock += i.qtyCount; // optionally add quantity to stock from bundle
+        }
+      });
+
+      saveLocalStorage();
+      alert('Bundle costs successfully updated across inventory items!');
+      switchTab('inventory');
+    }
+
+    // --- SALES & ANALYTICS LOGIC ---
+    function renderAnalytics() {
+      const totalRevenue = salesHistory.reduce((sum, s) => sum + s.grandTotal, 0);
+      const totalProfit = salesHistory.reduce((sum, s) => sum + s.profit, 0);
+      const totalItems = salesHistory.reduce((sum, s) => sum + s.items.reduce((iSum, i) => iSum + i.qty, 0), 0);
+
+      document.getElementById('stat-revenue').innerText = `$${totalRevenue.toFixed(2)}`;
+      document.getElementById('stat-profit').innerText = `$${totalProfit.toFixed(2)}`;
+      document.getElementById('stat-items-sold').innerText = totalItems;
+      document.getElementById('stat-orders-count').innerText = salesHistory.length;
+
+      renderDailyPayoutsTable();
+
+      const tbody = document.getElementById('sales-history-body');
+      tbody.innerHTML = '';
+
+      if(salesHistory.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400">No sales recorded yet.</td></tr>`;
+      } else {
+        salesHistory.forEach(s => {
+          const tr = document.createElement('tr');
+          const dateStr = new Date(s.timestamp).toLocaleDateString() + ' ' + new Date(s.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          tr.innerHTML = `
+            <td class="py-3 px-2 text-xs font-medium text-slate-600">${dateStr}</td>
+            <td class="py-3 px-2 text-xs font-bold text-slate-700">${s.paymentMethod}</td>
+            <td class="py-3 px-2 text-xs text-slate-500">${s.items.map(i => `${i.qty}x ${i.name}`).join(', ')}</td>
+            <td class="py-3 px-2 text-xs font-bold text-slate-800">$${s.grandTotal.toFixed(2)}</td>
+            <td class="py-3 px-2 text-xs font-bold text-emerald-600">$${s.profit.toFixed(2)}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      const topSellersList = document.getElementById('top-sellers-list');
+      topSellersList.innerHTML = '';
+
+      const counts = {};
+      salesHistory.forEach(s => {
+        s.items.forEach(i => {
+          counts[i.name] = (counts[i.name] || 0) + i.qty;
+        });
+      });
+
+      const sorted = Object.keys(counts).sort((a,b) => counts[b] - counts[a]);
+
+      if(sorted.length === 0) {
+        topSellersList.innerHTML = `<p class="text-xs text-slate-400">No sales data yet.</p>`;
+      } else {
+        sorted.slice(0, 5).forEach((name, idx) => {
+          const row = document.createElement('div');
+          row.className = "flex justify-between items-center bg-slate-50 p-3 rounded-2xl border border-slate-100";
+          row.innerHTML = `
+            <div class="flex items-center space-x-3">
+              <span class="w-6 h-6 bg-pink-100 text-pink-600 font-bold rounded-lg text-xs flex items-center justify-center">${idx + 1}</span>
+              <span class="font-bold text-xs text-slate-800">${name}</span>
+            </div>
+            <span class="text-xs font-semibold text-slate-500">${counts[name]} sold</span>
+          `;
+          topSellersList.appendChild(row);
+        });
+      }
+    }
+
+    function renderDailyPayoutsTable() {
+      const tbody = document.getElementById('daily-payouts-body');
+      tbody.innerHTML = '';
+
+      const dailyMap = {};
+      salesHistory.forEach(s => {
+        const dateKey = s.timestamp.split('T')[0];
+        if(!dailyMap[dateKey]) {
+          dailyMap[dateKey] = { sales: 0, cost: 0, profit: 0 };
+        }
+        dailyMap[dateKey].sales += s.grandTotal;
+        dailyMap[dateKey].cost += s.cost;
+        dailyMap[dateKey].profit += s.profit;
+      });
+
+      const dates = Object.keys(dailyMap).sort((a,b) => b.localeCompare(a));
+
+      if(dates.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400">No daily earnings recorded yet.</td></tr>`;
+        return;
+      }
+
+      dates.forEach(dateKey => {
+        const data = dailyMap[dateKey];
+        const payout = dailyPayouts[dateKey] || { distributed: false, timestamp: null };
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-50/50 transition-colors";
+
+        tr.innerHTML = `
+          <td class="py-3 px-3 text-xs font-bold text-slate-800">${dateKey}</td>
+          <td class="py-3 px-3 text-xs text-slate-600">$${data.sales.toFixed(2)}</td>
+          <td class="py-3 px-3 text-xs text-slate-500">$${data.cost.toFixed(2)}</td>
+          <td class="py-3 px-3 text-xs font-bold text-emerald-600">$${data.profit.toFixed(2)}</td>
+          <td class="py-3 px-3 text-xs">
+            ${payout.distributed 
+              ? `<span class="inline-flex flex-col"><span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 font-bold rounded-md w-fit">Distributed</span><span class="text-[10px] text-slate-400 mt-0.5">${new Date(payout.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></span>`
+              : `<span class="px-2 py-0.5 bg-amber-100 text-amber-700 font-bold rounded-md">Pending</span>`
+            }
+          </td>
+          <td class="py-3 px-3 text-right">
+            <button onclick="toggleDailyPayout('${dateKey}')" class="px-3 py-1.5 rounded-xl text-xs font-semibold shadow-sm transition-all ${payout.distributed ? 'bg-slate-100 text-slate-600 hover:bg-slate-200' : 'bg-pink-500 text-white hover:bg-pink-600'}">
+              ${payout.distributed ? 'Undo Payout' : 'Mark Distributed'}
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function toggleDailyPayout(dateKey) {
+      if(!dailyPayouts[dateKey]) {
+        dailyPayouts[dateKey] = { distributed: false, timestamp: null };
+      }
+
+      const current = dailyPayouts[dateKey].distributed;
+      dailyPayouts[dateKey] = {
+        distributed: !current,
+        timestamp: !current ? new Date().toISOString() : null
+      };
+
+      saveLocalStorage();
+      renderAnalytics();
+    }
+
+    function clearSalesHistory() {
+      if(confirm("Clear all past sales history? This cannot be undone.")) {
+        salesHistory = [];
+        dailyPayouts = {};
+        saveLocalStorage();
+        renderAnalytics();
+      }
+    }
+  </script>
+</body>
+</html>
