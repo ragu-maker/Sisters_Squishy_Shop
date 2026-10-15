@@ -18,7 +18,7 @@
     <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center gap-3">
         <div class="bg-pink-500 text-white p-2.5 rounded-2xl shadow-sm">
-          <i class="fa-solid fa-[#5865F2] fa-store text-xl"></i>
+          <i class="fa-solid fa-store text-xl"></i>
         </div>
         <div>
           <h1 class="font-bold text-xl text-slate-800 leading-none">Sisters Squishy Shop</h1>
@@ -117,7 +117,7 @@
       <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
         <div>
           <h2 class="font-bold text-xl text-slate-800">Variety Bundle Cost Allocator</h2>
-          <p class="text-sm text-slate-500">Easily split the total cost of a bulk variety bundle across included items to get the exact cost per item.</p>
+          <p class="text-sm text-slate-500">Specify item quantities included in a bulk purchase to calculate exact per-unit costs and automatically update inventory stock levels.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -127,26 +127,25 @@
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Allocation Method</label>
-            <select id="bundleMethod" onchange="toggleBundleWeights()" class="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-pink-400">
-              <option value="equal">Equal Cost per Item</option>
-              <option value="weighted">Weighted (Custom Split)</option>
+            <select id="bundleMethod" class="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-pink-400">
+              <option value="equal">Equal Cost per Individual Unit</option>
             </select>
           </div>
         </div>
 
         <div class="pt-4 border-t border-slate-100">
-          <label class="block text-xs font-semibold text-slate-600 mb-2">Select Items Included in this Bundle:</label>
-          <div id="bundleItemSelect" class="space-y-2 max-h-60 overflow-y-auto pr-2 border border-slate-100 rounded-xl p-3 bg-slate-50">
+          <label class="block text-xs font-semibold text-slate-600 mb-2">Select Included Items & Quantity Received in Bundle:</label>
+          <div id="bundleItemSelect" class="space-y-2 max-h-72 overflow-y-auto pr-2 border border-slate-100 rounded-xl p-3 bg-slate-50">
             <!-- Items listed dynamically -->
           </div>
         </div>
 
         <button onclick="calculateBundleAllocation()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl text-sm transition">
-          Calculate & Apply Unit Costs
+          Calculate Unit Costs & Add Stock
         </button>
 
         <div id="bundleResults" class="hidden p-4 bg-pink-50 rounded-xl border border-pink-200 space-y-2">
-          <h3 class="font-bold text-sm text-pink-900">Allocation Calculated!</h3>
+          <h3 class="font-bold text-sm text-pink-900">Allocation Calculated & Stock Updated!</h3>
           <ul id="bundleResultsList" class="text-xs text-pink-800 divide-y divide-pink-100"></ul>
         </div>
       </div>
@@ -315,26 +314,26 @@
         
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Product Name</label>
-          <input type="text" id="prodName" required placeholder="e.g. Pink Cat Squishy" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
+          <input type="text" id="prodName" required placeholder="e.g. Yellow Duck Squishy" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
         </div>
 
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Selling Price ($)</label>
-            <input type="number" id="prodPrice" required step="0.01" placeholder="4.00" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
+            <input type="number" id="prodPrice" step="0.01" placeholder="Optional" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Unit Cost ($)</label>
-            <input type="number" id="prodCost" required step="0.01" placeholder="1.50" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
+            <input type="number" id="prodCost" step="0.01" placeholder="Optional" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
           </div>
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Stock Qty</label>
-            <input type="number" id="prodStock" required placeholder="10" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Initial Stock</label>
+            <input type="number" id="prodStock" placeholder="0" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Product Image</label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Product Image (Square recommended)</label>
           <input type="file" id="prodImgInput" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100">
         </div>
 
@@ -348,13 +347,8 @@
 
   <!-- APPLICATION LOGIC -->
   <script>
-    // Global Application State
     let state = {
-      inventory: [
-        { id: '1', name: 'Cat Squishy', price: 4.00, cost: 1.25, stock: 12, img: '' },
-        { id: '2', name: 'Panda Squishy', price: 5.00, cost: 1.50, stock: 8, img: '' },
-        { id: '3', name: 'Gummy Bear', price: 3.00, cost: 0.80, stock: 15, img: '' }
-      ],
+      inventory: [],
       sales: [],
       payouts: []
     };
@@ -362,18 +356,14 @@
     let cart = [];
     let selectedPayment = 'cash';
 
-    // Cloud Sync Configuration
     let syncConfig = {
       binId: localStorage.getItem('jsonbin_bin_id') || '6ad1069affd5d160536e4ec5',
       masterKey: localStorage.getItem('jsonbin_master_key') || ''
     };
 
-    // Initialize App
     window.onload = function() {
-      // Set default payout date picker to today
       document.getElementById('payoutDate').value = new Date().toISOString().split('T')[0];
       
-      // Load local cache or fetch from Cloud
       if (syncConfig.masterKey && syncConfig.binId) {
         fetchFromCloud();
       } else {
@@ -391,7 +381,6 @@
       pushToCloud();
     }
 
-    // Cloud API Interactions
     async function fetchFromCloud() {
       if (!syncConfig.masterKey || !syncConfig.binId) return;
       updateSyncStatus('syncing', 'Syncing...');
@@ -455,7 +444,6 @@
       }
     }
 
-    // Tab Navigation
     function switchTab(tab) {
       ['pos', 'inventory', 'bundle', 'reports'].forEach(t => {
         document.getElementById(`view-${t}`).classList.add('hidden');
@@ -477,7 +465,6 @@
       renderReports();
     }
 
-    // POS Methods
     function renderPosGrid() {
       const search = document.getElementById('posSearch').value.toLowerCase();
       const grid = document.getElementById('posGrid');
@@ -491,14 +478,14 @@
           div.onclick = () => addToCart(item.id);
 
           const imgContent = item.img ? 
-            `<img src="${item.img}" class="w-full h-24 object-cover rounded-xl mb-2">` : 
-            `<div class="w-full h-24 bg-pink-50 rounded-xl flex items-center justify-center text-pink-300 text-2xl mb-2"><i class="fa-solid fa-cubes"></i></div>`;
+            `<img src="${item.img}" class="w-full aspect-square object-cover rounded-xl mb-2">` : 
+            `<div class="w-full aspect-square bg-pink-50 rounded-xl flex items-center justify-center text-pink-300 text-2xl mb-2"><i class="fa-solid fa-cubes"></i></div>`;
 
           div.innerHTML = `
             <div>
               ${imgContent}
               <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${item.name}</h3>
-              <p class="text-pink-600 font-extrabold text-sm mt-0.5">$${item.price.toFixed(2)}</p>
+              <p class="text-pink-600 font-extrabold text-sm mt-0.5">$${(item.price || 0).toFixed(2)}</p>
             </div>
             <div class="mt-2 text-[10px] font-semibold ${item.stock > 0 ? 'text-slate-400' : 'text-rose-500'}">
               ${item.stock > 0 ? `${item.stock} in stock` : 'Out of Stock'}
@@ -516,7 +503,7 @@
       if (cartItem) {
         if (cartItem.qty < item.stock) cartItem.qty++;
       } else {
-        cart.push({ id: item.id, name: item.name, price: item.price, cost: item.cost, qty: 1 });
+        cart.push({ id: item.id, name: item.name, price: item.price || 0, cost: item.cost || 0, qty: 1 });
       }
       renderCart();
     }
@@ -598,7 +585,6 @@
       } else {
         document.getElementById('qrBox').classList.remove('hidden');
         document.getElementById('qrLabel').innerText = `Scan to pay $${total.toFixed(2)} via ${type.toUpperCase()}`;
-        // Generic QR Code placeholder
         document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${type}_payment`;
       }
     }
@@ -615,7 +601,6 @@
       const totalCost = cart.reduce((sum, item) => sum + (item.cost * item.qty), 0);
       const profit = total - totalCost;
 
-      // Update Inventory Stock
       cart.forEach(cItem => {
         const invItem = state.inventory.find(i => i.id === cItem.id);
         if (invItem) {
@@ -623,7 +608,6 @@
         }
       });
 
-      // Log Sale
       state.sales.push({
         id: Date.now().toString(),
         timestamp: new Date().toISOString(),
@@ -640,7 +624,6 @@
       alert('Sale Completed Successfully!');
     }
 
-    // INVENTORY MANAGEMENT
     function renderInventoryGrid() {
       const grid = document.getElementById('inventoryGrid');
       grid.innerHTML = '';
@@ -650,18 +633,22 @@
         div.className = 'bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3';
 
         const imgContent = item.img ? 
-          `<img src="${item.img}" class="w-full h-32 object-cover rounded-xl">` : 
-          `<div class="w-full h-32 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 text-3xl"><i class="fa-solid fa-image"></i></div>`;
+          `<img src="${item.img}" class="w-full aspect-square object-cover rounded-xl">` : 
+          `<div class="w-full aspect-square bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 text-3xl"><i class="fa-solid fa-image"></i></div>`;
+
+        const priceDisplay = item.price ? `$${item.price.toFixed(2)}` : 'Unset';
+        const costDisplay = item.cost ? `$${item.cost.toFixed(2)}` : 'Unset';
+        const marginDisplay = (item.price && item.cost) ? `$${(item.price - item.cost).toFixed(2)}` : 'N/A';
 
         div.innerHTML = `
           ${imgContent}
           <div>
             <h3 class="font-bold text-sm text-slate-800">${item.name}</h3>
             <div class="grid grid-cols-2 gap-1 text-xs mt-2">
-              <span class="text-slate-500">Price: <b class="text-slate-800">$${item.price.toFixed(2)}</b></span>
-              <span class="text-slate-500">Cost: <b class="text-slate-800">$${item.cost.toFixed(2)}</b></span>
-              <span class="text-slate-500">Margin: <b class="text-emerald-600">$${(item.price - item.cost).toFixed(2)}</b></span>
-              <span class="text-slate-500">Stock: <b class="${item.stock < 5 ? 'text-rose-500 font-bold' : 'text-slate-800'}">${item.stock}</b></span>
+              <span class="text-slate-500">Price: <b class="text-slate-800">${priceDisplay}</b></span>
+              <span class="text-slate-500">Cost: <b class="text-slate-800">${costDisplay}</b></span>
+              <span class="text-slate-500">Margin: <b class="text-emerald-600">${marginDisplay}</b></span>
+              <span class="text-slate-500">Stock: <b class="${item.stock < 5 ? 'text-rose-500 font-bold' : 'text-slate-800'}">${item.stock || 0}</b></span>
             </div>
           </div>
           <div class="flex gap-2 pt-2 border-t border-slate-100">
@@ -683,9 +670,9 @@
         if (item) {
           document.getElementById('prodId').value = item.id;
           document.getElementById('prodName').value = item.name;
-          document.getElementById('prodPrice').value = item.price;
-          document.getElementById('prodCost').value = item.cost;
-          document.getElementById('prodStock').value = item.stock;
+          document.getElementById('prodPrice').value = item.price || '';
+          document.getElementById('prodCost').value = item.cost || '';
+          document.getElementById('prodStock').value = item.stock || '';
           document.getElementById('productModalTitle').innerText = 'Edit Product';
         }
       }
@@ -711,10 +698,14 @@
       e.preventDefault();
       const id = document.getElementById('prodId').value || Date.now().toString();
       const name = document.getElementById('prodName').value;
-      const price = parseFloat(document.getElementById('prodPrice').value);
-      const cost = parseFloat(document.getElementById('prodCost').value);
-      const stock = parseInt(document.getElementById('prodStock').value);
+      const priceVal = document.getElementById('prodPrice').value;
+      const costVal = document.getElementById('prodCost').value;
+      const stockVal = document.getElementById('prodStock').value;
       const imgInput = document.getElementById('prodImgInput');
+
+      const price = priceVal !== '' ? parseFloat(priceVal) : 0;
+      const cost = costVal !== '' ? parseFloat(costVal) : 0;
+      const stock = stockVal !== '' ? parseInt(stockVal) : 0;
 
       let img = '';
       const existing = state.inventory.find(i => i.id === id);
@@ -743,88 +734,89 @@
       });
     }
 
-    // BUNDLE ALLOCATOR
     function renderBundleItemSelection() {
       const container = document.getElementById('bundleItemSelect');
       container.innerHTML = '';
 
+      if (state.inventory.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">No products in inventory yet. Add products first!</p>`;
+        return;
+      }
+
       state.inventory.forEach(item => {
         const div = document.createElement('div');
-        div.className = 'flex items-center justify-between text-xs py-1';
+        div.className = 'flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-0';
         div.innerHTML = `
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" value="${item.id}" class="bundle-chk rounded text-pink-500 focus:ring-pink-400">
+          <label class="flex items-center gap-2 cursor-pointer flex-1">
+            <input type="checkbox" value="${item.id}" onchange="toggleBundleQtyInput('${item.id}')" class="bundle-chk rounded text-pink-500 focus:ring-pink-400">
             <span class="font-medium text-slate-700">${item.name}</span>
           </label>
-          <input type="number" id="weight-${item.id}" placeholder="Weight" value="1" disabled class="bundle-weight w-16 p-1 border rounded text-right bg-slate-100">
+          <div class="flex items-center gap-1">
+            <span class="text-[10px] text-slate-400">Bundle Qty:</span>
+            <input type="number" id="bundle-qty-${item.id}" min="1" value="1" disabled class="bundle-qty-input w-16 p-1 border border-slate-200 rounded text-right bg-slate-100">
+          </div>
         `;
         container.appendChild(div);
       });
     }
 
-    function toggleBundleWeights() {
-      const isWeighted = document.getElementById('bundleMethod').value === 'weighted';
-      document.querySelectorAll('.bundle-weight').forEach(input => {
-        input.disabled = !isWeighted;
-        input.className = `bundle-weight w-16 p-1 border rounded text-right ${isWeighted ? 'bg-white' : 'bg-slate-100'}`;
-      });
+    function toggleBundleQtyInput(id) {
+      const chk = document.querySelector(`.bundle-chk[value="${id}"]`);
+      const qtyInput = document.getElementById(`bundle-qty-${id}`);
+      if (chk && qtyInput) {
+        qtyInput.disabled = !chk.checked;
+        qtyInput.className = `bundle-qty-input w-16 p-1 border rounded text-right ${chk.checked ? 'bg-white border-pink-300 font-bold' : 'bg-slate-100 border-slate-200'}`;
+      }
     }
 
     function calculateBundleAllocation() {
-      const totalCost = parseFloat(document.getElementById('bundleTotalCost').value);
-      if (!totalCost || totalCost <= 0) {
-        alert('Please enter a valid bundle cost');
+      const totalBundleCost = parseFloat(document.getElementById('bundleTotalCost').value);
+      if (isNaN(totalBundleCost) || totalBundleCost <= 0) {
+        alert('Please enter a valid total bundle cost');
         return;
       }
 
-      const selected = Array.from(document.querySelectorAll('.bundle-chk:checked')).map(cb => cb.value);
-      if (selected.length === 0) {
-        alert('Please select at least one item');
+      const selectedCheckboxes = Array.from(document.querySelectorAll('.bundle-chk:checked'));
+      if (selectedCheckboxes.length === 0) {
+        alert('Please select at least one item included in this bundle');
         return;
       }
 
-      const method = document.getElementById('bundleMethod').value;
+      let totalUnitsInBundle = 0;
+      const itemsToUpdate = [];
+
+      selectedCheckboxes.forEach(cb => {
+        const id = cb.value;
+        const qty = parseInt(document.getElementById(`bundle-qty-${id}`).value) || 1;
+        totalUnitsInBundle += qty;
+        itemsToUpdate.push({ id, bundleQty: qty });
+      });
+
+      const costPerIndividualUnit = totalBundleCost / totalUnitsInBundle;
+
       const resultsList = document.getElementById('bundleResultsList');
       resultsList.innerHTML = '';
 
-      if (method === 'equal') {
-        const unitCost = totalCost / selected.length;
-        selected.forEach(id => {
-          const item = state.inventory.find(i => i.id === id);
-          if (item) {
-            item.cost = parseFloat(unitCost.toFixed(2));
-            const li = document.createElement('li');
-            li.className = 'py-1 flex justify-between';
-            li.innerHTML = `<span>${item.name}</span><b>New Unit Cost: $${item.cost.toFixed(2)}</b>`;
-            resultsList.appendChild(li);
-          }
-        });
-      } else {
-        let totalWeight = 0;
-        selected.forEach(id => {
-          const w = parseFloat(document.getElementById(`weight-${id}`).value) || 1;
-          totalWeight += w;
-        });
+      itemsToUpdate.forEach(entry => {
+        const item = state.inventory.find(i => i.id === entry.id);
+        if (item) {
+          item.cost = parseFloat(costPerIndividualUnit.toFixed(2));
+          item.stock = (item.stock || 0) + entry.bundleQty;
 
-        selected.forEach(id => {
-          const item = state.inventory.find(i => i.id === id);
-          const w = parseFloat(document.getElementById(`weight-${id}`).value) || 1;
-          const allocatedCost = (w / totalWeight) * totalCost;
-          if (item) {
-            item.cost = parseFloat(allocatedCost.toFixed(2));
-            const li = document.createElement('li');
-            li.className = 'py-1 flex justify-between';
-            li.innerHTML = `<span>${item.name}</span><b>New Unit Cost: $${item.cost.toFixed(2)}</b>`;
-            resultsList.appendChild(li);
-          }
-        });
-      }
+          const li = document.createElement('li');
+          li.className = 'py-1 flex justify-between items-center';
+          li.innerHTML = `
+            <span><b>${item.name}</b> (+${entry.bundleQty} added to stock)</span>
+            <span>Unit Cost: <b>$${item.cost.toFixed(2)}</b></span>
+          `;
+          resultsList.appendChild(li);
+        }
+      });
 
       document.getElementById('bundleResults').classList.remove('hidden');
       saveState();
     }
 
-    // REPORTS & DAILY PAYOUT
     function renderReports() {
       const totalRev = state.sales.reduce((sum, s) => sum + s.total, 0);
       const totalCost = state.sales.reduce((sum, s) => sum + s.cost, 0);
@@ -905,7 +897,6 @@
       });
     }
 
-    // CLOUD MODAL MANAGEMENT
     function openSyncSettings() {
       document.getElementById('cfgMasterKey').value = syncConfig.masterKey;
       document.getElementById('cfgBinId').value = syncConfig.binId;
