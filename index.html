@@ -381,36 +381,51 @@
       pushToCloud();
     }
 
-    async function fetchFromCloud() {
-      if (!syncConfig.masterKey || !syncConfig.binId) return;
-      updateSyncStatus('syncing', 'Syncing...');
-      try {
-        const res = await fetch(`https://api.jsonbin.io/v3/b/${syncConfig.binId}/latest`, {
-          headers: { 'X-Master-Key': syncConfig.masterKey }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.record) {
-            state = {
-              inventory: data.record.inventory || [],
-              sales: data.record.sales || [],
-              payouts: data.record.payouts || []
-            };
-            localStorage.setItem('squishy_pos_data', JSON.stringify(state));
-            updateSyncStatus('success', 'Synced');
-            renderAll();
-          }
-        } else {
-          updateSyncStatus('error', 'Sync Failed');
-        }
-      } catch (err) {
-        updateSyncStatus('error', 'Offline');
+async function fetchFromCloud() {
+  if (!syncConfig.masterKey || !syncConfig.binId) return;
+  
+  // Clean up any hidden spaces from the inputs
+  const cleanKey = syncConfig.masterKey.trim();
+  const cleanBin = syncConfig.binId.trim();
+
+  updateSyncStatus('syncing', 'Syncing...');
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${cleanBin}/latest`, {
+      method: 'GET',
+      headers: { 
+        'X-Master-Key': cleanKey 
       }
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      if (data.record) {
+        state = {
+          inventory: data.record.inventory || [],
+          sales: data.record.sales || [],
+          payouts: data.record.payouts || []
+        };
+        localStorage.setItem('squishy_pos_data', JSON.stringify(state));
+        updateSyncStatus('success', 'Synced');
+        renderAll();
+      }
+    } else {
+      console.error('Fetch error:', await res.text());
+      updateSyncStatus('error', 'Sync Failed');
     }
+  } catch (err) {
+    console.error('Network error:', err);
+    updateSyncStatus('error', 'Offline');
+  }
+}
+
 async function pushToCloud() {
   if (!syncConfig.masterKey || !syncConfig.binId) return;
 
-  // SAFETY GUARD: Do not overwrite cloud data if local inventory is completely empty
+  const cleanKey = syncConfig.masterKey.trim();
+  const cleanBin = syncConfig.binId.trim();
+
+  // SAFETY GUARD: Never overwrite cloud data if local inventory is empty
   if (!state.inventory || state.inventory.length === 0) {
     console.log('Skipping cloud push: Local inventory is empty.');
     return;
@@ -418,21 +433,23 @@ async function pushToCloud() {
 
   updateSyncStatus('syncing', 'Saving...');
   try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${syncConfig.binId}`, {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${cleanBin}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
-        'X-Master-Key': syncConfig.masterKey,
-        'X-Bin-Versioning': 'true' // Automatically creates a version snapshot on every save
+        'X-Master-Key': cleanKey,
+        'X-Bin-Versioning': 'true'
       },
       body: JSON.stringify(state)
     });
     if (res.ok) {
       updateSyncStatus('success', 'Synced');
     } else {
+      console.error('Push error:', await res.text());
       updateSyncStatus('error', 'Error Saving');
     }
   } catch (err) {
+    console.error('Network error:', err);
     updateSyncStatus('error', 'Offline');
   }
 }
