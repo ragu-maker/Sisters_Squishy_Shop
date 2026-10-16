@@ -407,28 +407,35 @@
         updateSyncStatus('error', 'Offline');
       }
     }
+async function pushToCloud() {
+  if (!syncConfig.masterKey || !syncConfig.binId) return;
 
-    async function pushToCloud() {
-      if (!syncConfig.masterKey || !syncConfig.binId) return;
-      updateSyncStatus('syncing', 'Saving...');
-      try {
-        const res = await fetch(`https://api.jsonbin.io/v3/b/${syncConfig.binId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Master-Key': syncConfig.masterKey
-          },
-          body: JSON.stringify(state)
-        });
-        if (res.ok) {
-          updateSyncStatus('success', 'Synced');
-        } else {
-          updateSyncStatus('error', 'Error Saving');
-        }
-      } catch (err) {
-        updateSyncStatus('error', 'Offline');
-      }
+  // SAFETY GUARD: Do not overwrite cloud data if local inventory is completely empty
+  if (!state.inventory || state.inventory.length === 0) {
+    console.log('Skipping cloud push: Local inventory is empty.');
+    return;
+  }
+
+  updateSyncStatus('syncing', 'Saving...');
+  try {
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${syncConfig.binId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Master-Key': syncConfig.masterKey,
+        'X-Bin-Versioning': 'true' // Automatically creates a version snapshot on every save
+      },
+      body: JSON.stringify(state)
+    });
+    if (res.ok) {
+      updateSyncStatus('success', 'Synced');
+    } else {
+      updateSyncStatus('error', 'Error Saving');
     }
+  } catch (err) {
+    updateSyncStatus('error', 'Offline');
+  }
+}
 
     function updateSyncStatus(type, text) {
       const icon = document.getElementById('syncStatusIcon');
