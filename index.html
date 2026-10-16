@@ -7,14 +7,14 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #94C5CB; }
     .tab-active { border-bottom: 3px solid #ec4899; color: #ec4899; font-weight: bold; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+<body class="text-slate-800 min-h-screen flex flex-col">
 
   <!-- Header -->
-  <header class="bg-white shadow-sm border-b border-slate-200 sticky top-0 z-30">
+  <header class="bg-white/95 backdrop-blur-sm shadow-sm border-b border-slate-200/60 sticky top-0 z-30">
     <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
       <div class="flex items-center gap-3">
         <div class="bg-pink-500 text-white p-2.5 rounded-2xl shadow-sm">
@@ -36,41 +36,42 @@
 
     <!-- Navigation Tabs -->
     <nav class="flex justify-center border-t border-slate-100 bg-white">
-      <button onclick="switchTab('pos')" id="tab-pos" class="tab-btn px-6 py-3 text-sm font-medium tab-active flex items-center gap-2">
+      <button onclick="switchTab('pos')" id="tab-pos" class="tab-btn px-4 sm:px-6 py-3 text-sm font-medium tab-active flex items-center gap-2">
         <i class="fa-solid fa-cash-register"></i> POS Register
       </button>
-      <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-6 py-3 text-sm font-medium text-slate-500 hover:text-pink-500 flex items-center gap-2">
+      <button onclick="switchTab('inventory')" id="tab-inventory" class="tab-btn px-4 sm:px-6 py-3 text-sm font-medium text-slate-500 hover:text-pink-500 flex items-center gap-2">
         <i class="fa-solid fa-boxes-stacked"></i> Inventory
       </button>
-      <button onclick="switchTab('bundle')" id="tab-bundle" class="tab-btn px-6 py-3 text-sm font-medium text-slate-500 hover:text-pink-500 flex items-center gap-2">
+      <button onclick="switchTab('bundle')" id="tab-bundle" class="tab-btn px-4 sm:px-6 py-3 text-sm font-medium text-slate-500 hover:text-pink-500 flex items-center gap-2">
         <i class="fa-solid fa-calculator"></i> Bundle Allocator
       </button>
-      <button onclick="switchTab('reports')" id="tab-reports" class="tab-btn px-6 py-3 text-sm font-medium text-slate-500 hover:text-pink-500 flex items-center gap-2">
+      <button onclick="switchTab('reports')" id="tab-reports" class="tab-btn px-4 sm:px-6 py-3 text-sm font-medium text-slate-500 hover:text-pink-500 flex items-center gap-2">
         <i class="fa-solid fa-chart-line"></i> Reports & Daily Payout
       </button>
     </nav>
   </header>
 
   <!-- Main Container -->
-  <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6">
+  <main class="flex-grow max-w-7xl w-full mx-auto p-3 md:p-6">
 
     <!-- POS REGISTER VIEW -->
-    <div id="view-pos" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div id="view-pos" class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
       <div class="lg:col-span-2 space-y-4">
-        <div class="flex justify-between items-center gap-4 bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
+        <div class="flex justify-between items-center gap-4 bg-white/90 backdrop-blur-sm p-3 rounded-2xl shadow-sm border border-slate-200/60">
           <div class="relative flex-1">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
             <input type="text" id="posSearch" oninput="renderPosGrid()" placeholder="Search products..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-pink-400">
           </div>
         </div>
 
-        <div id="posGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        <!-- Tightened 3-column mobile layout grid -->
+        <div id="posGrid" class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3">
           <!-- Products inserted dynamically -->
         </div>
       </div>
 
       <!-- Checkout Cart -->
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between h-fit sticky top-24">
+      <div class="bg-white/95 backdrop-blur-sm rounded-2xl shadow-sm border border-slate-200/60 p-4 sm:p-5 flex flex-col justify-between h-fit sticky top-24">
         <div>
           <h2 class="font-bold text-lg text-slate-800 pb-3 border-b border-slate-100 flex justify-between items-center">
             Current Order
@@ -97,7 +98,7 @@
 
     <!-- INVENTORY VIEW -->
     <div id="view-inventory" class="hidden space-y-6">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/90 backdrop-blur-sm p-4 rounded-2xl shadow-sm border border-slate-200/60">
         <div>
           <h2 class="font-bold text-lg text-slate-800">Squishy Inventory</h2>
           <p class="text-xs text-slate-500">Manage products, pricing, stock levels, and costs</p>
@@ -107,14 +108,14 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="inventoryGrid">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3" id="inventoryGrid">
         <!-- Dynamic Inventory Items -->
       </div>
     </div>
 
     <!-- BUNDLE ALLOCATOR VIEW -->
     <div id="view-bundle" class="hidden space-y-6 max-w-3xl mx-auto">
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+      <div class="bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-slate-200/60 space-y-4">
         <div>
           <h2 class="font-bold text-xl text-slate-800">Variety Bundle Cost Allocator</h2>
           <p class="text-sm text-slate-500">Specify item quantities included in a bulk purchase to calculate exact per-unit costs and automatically update inventory stock levels.</p>
@@ -165,33 +166,33 @@
     <!-- REPORTS & DAILY PAYOUT VIEW -->
     <div id="view-reports" class="hidden space-y-6">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-slate-200/60 shadow-sm">
           <p class="text-xs font-semibold text-slate-500 uppercase">Total Revenue</p>
           <h3 id="repRevenue" class="text-2xl font-bold text-slate-800 mt-1">$0.00</h3>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-slate-200/60 shadow-sm">
           <p class="text-xs font-semibold text-slate-500 uppercase">Total Cost of Goods</p>
           <h3 id="repCost" class="text-2xl font-bold text-slate-800 mt-1">$0.00</h3>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-slate-200/60 shadow-sm">
           <p class="text-xs font-semibold text-slate-500 uppercase">Net Profit</p>
           <h3 id="repProfit" class="text-2xl font-bold text-emerald-600 mt-1">$0.00</h3>
         </div>
-        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <div class="bg-white/95 backdrop-blur-sm p-5 rounded-2xl border border-slate-200/60 shadow-sm">
           <p class="text-xs font-semibold text-slate-500 uppercase">Items Sold</p>
           <h3 id="repItemsSold" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
         </div>
       </div>
 
       <!-- Daily Payout Section -->
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
+      <div class="bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-slate-200/60 space-y-4">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div>
             <h2 class="font-bold text-lg text-slate-800">Daily Profit & Payout Tracker</h2>
             <p class="text-xs text-slate-500">Calculates net profits daily so you can easily distribute earnings to your daughter.</p>
           </div>
           <div class="flex items-center gap-2">
-            <input type="date" id="payoutDate" onchange="renderDailyPayout()" class="border border-slate-200 p-2 rounded-xl text-xs">
+            <input type="date" id="payoutDate" onchange="renderDailyPayout()" class="border border-slate-200 p-2 rounded-xl text-xs bg-white">
           </div>
         </div>
 
@@ -213,7 +214,7 @@
       </div>
 
       <!-- Recent Sales History -->
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+      <div class="bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-slate-200/60">
         <h2 class="font-bold text-lg text-slate-800 mb-4">Completed Orders History</h2>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-600">
@@ -512,22 +513,27 @@
       const grid = document.getElementById('posGrid');
       grid.innerHTML = '';
 
-      state.inventory
+      // Sort items alphabetically by name
+      const sortedInventory = [...state.inventory].sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+      );
+
+      sortedInventory
         .filter(item => item.name.toLowerCase().includes(search))
         .forEach(item => {
           const div = document.createElement('div');
-          div.className = `bg-white p-3 rounded-2xl border ${item.stock > 0 ? 'border-slate-200 hover:border-pink-300' : 'border-rose-200 bg-rose-50/20'} shadow-sm text-center flex flex-col justify-between cursor-pointer transition`;
+          div.className = `bg-white/95 backdrop-blur-sm p-2 rounded-xl border ${item.stock > 0 ? 'border-slate-200/80 hover:border-pink-400' : 'border-rose-200 bg-rose-50/40'} shadow-sm text-center flex flex-col justify-between cursor-pointer transition select-none`;
           div.onclick = () => addToCart(item.id);
 
           const emojiIcon = item.emoji || '✨';
 
           div.innerHTML = `
             <div>
-              <div class="w-full aspect-square bg-pink-50 rounded-xl flex items-center justify-center text-5xl mb-2">${emojiIcon}</div>
-              <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${item.name}</h3>
-              <p class="text-pink-600 font-extrabold text-sm mt-0.5">$${(item.price || 0).toFixed(2)}</p>
+              <div class="w-full aspect-square bg-pink-50/70 rounded-lg flex items-center justify-center text-3xl sm:text-4xl mb-1">${emojiIcon}</div>
+              <h3 class="font-bold text-[11px] sm:text-xs text-slate-800 line-clamp-1 leading-tight">${item.name}</h3>
+              <p class="text-pink-600 font-extrabold text-xs sm:text-sm mt-0.5">$${(item.price || 0).toFixed(2)}</p>
             </div>
-            <div class="mt-2 text-[10px] font-semibold ${item.stock > 0 ? 'text-slate-400' : 'text-rose-500'}">
+            <div class="mt-1 text-[9px] sm:text-[10px] font-semibold ${item.stock > 0 ? 'text-slate-400' : 'text-rose-500'}">
               ${item.stock > 0 ? `${item.stock} in stock` : 'Out of Stock'}
             </div>
           `;
@@ -668,9 +674,14 @@
       const grid = document.getElementById('inventoryGrid');
       grid.innerHTML = '';
 
-      state.inventory.forEach(item => {
+      // Sort items alphabetically by name
+      const sortedInventory = [...state.inventory].sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+      );
+
+      sortedInventory.forEach(item => {
         const div = document.createElement('div');
-        div.className = 'bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3';
+        div.className = 'bg-white/95 backdrop-blur-sm p-3 rounded-2xl border border-slate-200/60 shadow-sm space-y-2';
 
         const emojiIcon = item.emoji || '✨';
         const priceDisplay = item.price ? `$${item.price.toFixed(2)}` : 'Unset';
@@ -678,19 +689,19 @@
         const marginDisplay = (item.price && item.cost) ? `$${(item.price - item.cost).toFixed(2)}` : 'N/A';
 
         div.innerHTML = `
-          <div class="w-full aspect-square bg-slate-50 rounded-xl flex items-center justify-center text-6xl">${emojiIcon}</div>
+          <div class="w-full aspect-square bg-slate-50 rounded-xl flex items-center justify-center text-4xl sm:text-5xl">${emojiIcon}</div>
           <div>
-            <h3 class="font-bold text-sm text-slate-800">${item.name}</h3>
-            <div class="grid grid-cols-2 gap-1 text-xs mt-2">
+            <h3 class="font-bold text-xs sm:text-sm text-slate-800 line-clamp-1">${item.name}</h3>
+            <div class="grid grid-cols-2 gap-1 text-[11px] mt-1">
               <span class="text-slate-500">Price: <b class="text-slate-800">${priceDisplay}</b></span>
               <span class="text-slate-500">Cost: <b class="text-slate-800">${costDisplay}</b></span>
               <span class="text-slate-500">Margin: <b class="text-emerald-600">${marginDisplay}</b></span>
               <span class="text-slate-500">Stock: <b class="${item.stock < 5 ? 'text-rose-500 font-bold' : 'text-slate-800'}">${item.stock || 0}</b></span>
             </div>
           </div>
-          <div class="flex gap-2 pt-2 border-t border-slate-100">
-            <button onclick="editProduct('${item.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-1.5 rounded-lg transition">Edit</button>
-            <button onclick="deleteProduct('${item.id}')" class="px-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
+          <div class="flex gap-1.5 pt-2 border-t border-slate-100">
+            <button onclick="editProduct('${item.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-semibold py-1 rounded-lg transition">Edit</button>
+            <button onclick="deleteProduct('${item.id}')" class="px-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-[11px] rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
           </div>
         `;
         grid.appendChild(div);
@@ -785,12 +796,10 @@
       state.inventory.push(newItem);
       saveState();
 
-      // Clear quick inputs and refresh bundle item checkboxes
       nameInput.value = '';
       emojiInput.value = '';
       renderBundleItemSelection();
 
-      // Automatically check the newly added item for convenience
       const newCheckbox = document.querySelector(`.bundle-chk[value="${newItem.id}"]`);
       if (newCheckbox) {
         newCheckbox.checked = true;
@@ -807,7 +816,12 @@
         return;
       }
 
-      state.inventory.forEach(item => {
+      // Sort items alphabetically by name
+      const sortedInventory = [...state.inventory].sort((a, b) => 
+        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
+      );
+
+      sortedInventory.forEach(item => {
         const div = document.createElement('div');
         div.className = 'flex items-center justify-between text-xs py-1.5 border-b border-slate-100 last:border-0';
         div.innerHTML = `
