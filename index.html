@@ -64,7 +64,6 @@
           </div>
         </div>
 
-        <!-- 3-column grid layout -->
         <div id="posGrid" class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3">
           <!-- Products inserted dynamically -->
         </div>
@@ -137,7 +136,6 @@
         <div class="pt-4 border-t border-slate-100 space-y-3">
           <label class="block text-xs font-semibold text-slate-600">Select Included Items & Quantity Received in Bundle:</label>
           
-          <!-- QUICK ADD ITEM BOX INSIDE BUNDLE ALLOCATOR -->
           <div class="p-3 bg-pink-50/60 rounded-xl border border-pink-100 space-y-2">
             <p class="text-xs font-bold text-pink-900"><i class="fa-solid fa-circle-plus text-pink-500 mr-1"></i> Missing an item? Quick Add Product:</p>
             <div class="flex gap-2">
@@ -298,14 +296,26 @@
         </div>
       </div>
 
-      <!-- Digital QR Code Display -->
-      <div id="qrBox" class="hidden text-center space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+      <!-- Digital QR Code / Action Box -->
+      <div id="qrBox" class="hidden text-center space-y-2.5 p-3 bg-slate-50 rounded-xl border border-slate-200">
         <p id="qrLabel" class="text-xs font-semibold text-slate-700"></p>
-        <div class="bg-white p-3 rounded-xl inline-block border shadow-sm">
-          <img id="qrImage" src="" alt="Payment QR Code" class="w-36 h-36 mx-auto">
+
+        <div class="bg-white p-3 rounded-xl inline-block border shadow-sm max-w-[220px]">
+          <img id="qrImage" src="" alt="Payment QR Code" class="w-full h-auto mx-auto rounded-lg">
         </div>
-        <div id="qrSubtext" class="text-xs text-slate-500 font-medium"></div>
-        <a id="venmoDirectBtn" href="#" target="_blank" class="hidden mt-2 inline-block bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs py-2 px-4 rounded-xl transition shadow-sm">
+
+        <div id="qrSubtext" class="text-xs text-slate-600"></div>
+
+        <!-- Zelle Quick Copy Box -->
+        <div id="zelleCopyBox" class="hidden pt-1 flex flex-col items-center gap-1.5">
+          <button onclick="copyZelleNumber()" id="zelleCopyBtn" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2 px-4 rounded-xl transition shadow-sm flex items-center gap-1.5">
+            <i class="fa-solid fa-copy"></i> Copy Zelle Phone Number
+          </button>
+          <span class="text-[11px] text-slate-400">Open bank app & scan QR or search by phone number</span>
+        </div>
+
+        <!-- Venmo Direct App Button -->
+        <a id="venmoDirectBtn" href="#" target="_blank" class="hidden mt-1 inline-block bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs py-2 px-4 rounded-xl transition shadow-sm">
           <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Open in Venmo App
         </a>
       </div>
@@ -516,7 +526,6 @@
       const grid = document.getElementById('posGrid');
       grid.innerHTML = '';
 
-      // Sort items alphabetically by name
       const sortedInventory = [...state.inventory].sort((a, b) => 
         (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
       );
@@ -625,6 +634,7 @@
       document.getElementById('cashBox').classList.add('hidden');
       document.getElementById('qrBox').classList.add('hidden');
       document.getElementById('venmoDirectBtn').classList.add('hidden');
+      document.getElementById('zelleCopyBox').classList.add('hidden');
 
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
@@ -646,11 +656,24 @@
       } else if (type === 'zelle') {
         document.getElementById('qrBox').classList.remove('hidden');
         document.getElementById('qrLabel').innerText = `Pay $${total.toFixed(2)} via Zelle`;
-        document.getElementById('qrSubtext').innerHTML = `Zelle Phone: <b class="text-slate-800 select-all font-bold">512-484-8717</b>`;
+        document.getElementById('qrSubtext').innerHTML = `Raul Aguirre <b class="text-slate-800 text-sm font-bold block mt-0.5">(512) 484-8717</b>`;
         
-        const zellePayload = `Zelle Payment to 512-484-8717 for $${total.toFixed(2)} - Sisters Squishy Shop`;
-        document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(zellePayload)}`;
+        // Loads your official Zelle QR image uploaded to your repository
+        document.getElementById('qrImage').src = `zelle-qr.png`;
+        document.getElementById('zelleCopyBox').classList.remove('hidden');
       }
+    }
+
+    function copyZelleNumber() {
+      navigator.clipboard.writeText('5124848717').then(() => {
+        const btn = document.getElementById('zelleCopyBtn');
+        btn.innerHTML = `<i class="fa-solid fa-check"></i> Copied (512-484-8717)!`;
+        btn.className = 'bg-emerald-600 text-white font-bold text-xs py-2 px-4 rounded-xl transition shadow-sm flex items-center gap-1.5';
+        setTimeout(() => {
+          btn.innerHTML = `<i class="fa-solid fa-copy"></i> Copy Zelle Phone Number`;
+          btn.className = 'bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2 px-4 rounded-xl transition shadow-sm flex items-center gap-1.5';
+        }, 2500);
+      });
     }
 
     function calculateChange() {
@@ -692,7 +715,6 @@
       const grid = document.getElementById('inventoryGrid');
       grid.innerHTML = '';
 
-      // Sort items alphabetically by name
       const sortedInventory = [...state.inventory].sort((a, b) => 
         (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
       );
@@ -834,7 +856,6 @@
         return;
       }
 
-      // Sort items alphabetically by name
       const sortedInventory = [...state.inventory].sort((a, b) => 
         (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
       );
