@@ -749,15 +749,35 @@ async function pushToCloud() {
       saveState();
     }
 
-    function convertBase64(file) {
-      return new Promise((resolve, reject) => {
-        const fileReader = new FileReader();
-        fileReader.readAsDataURL(file);
-        fileReader.onload = () => resolve(fileReader.result);
-        fileReader.onerror = (error) => reject(error);
-      });
-    }
+   function convertBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        // Resize to maximum 200x200 square for compact storage
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 200;
+        const MAX_HEIGHT = 200;
+        canvas.width = MAX_WIDTH;
+        canvas.height = MAX_HEIGHT;
 
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, MAX_WIDTH, MAX_HEIGHT);
+
+        // Compress JPEG to 60% quality
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+        resolve(compressedBase64);
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+}
+
+    
     function renderBundleItemSelection() {
       const container = document.getElementById('bundleItemSelect');
       container.innerHTML = '';
