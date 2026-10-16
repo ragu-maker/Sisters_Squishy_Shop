@@ -317,6 +317,25 @@
           <input type="text" id="prodName" required placeholder="e.g. Yellow Duck Squishy" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
         </div>
 
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Select Emoji Icon</label>
+          <div class="flex gap-2">
+            <input type="text" id="prodEmoji" required placeholder="🐥" class="w-16 text-center border border-slate-200 p-2 rounded-xl text-lg focus:ring-2 focus:ring-pink-400">
+            <div class="flex flex-wrap gap-1 items-center bg-slate-50 border border-slate-200 p-1.5 rounded-xl flex-1 text-base">
+              <span onclick="setEmoji('🐥')" class="cursor-pointer hover:scale-125 transition">🐥</span>
+              <span onclick="setEmoji('🦆')" class="cursor-pointer hover:scale-125 transition">🦆</span>
+              <span onclick="setEmoji('🐱')" class="cursor-pointer hover:scale-125 transition">🐱</span>
+              <span onclick="setEmoji('🐰')" class="cursor-pointer hover:scale-125 transition">🐰</span>
+              <span onclick="setEmoji('🐻')" class="cursor-pointer hover:scale-125 transition">🐻</span>
+              <span onclick="setEmoji('🐼')" class="cursor-pointer hover:scale-125 transition">🐼</span>
+              <span onclick="setEmoji('🦄')" class="cursor-pointer hover:scale-125 transition">🦄</span>
+              <span onclick="setEmoji('🐸')" class="cursor-pointer hover:scale-125 transition">🐸</span>
+              <span onclick="setEmoji('🐙')" class="cursor-pointer hover:scale-125 transition">🐙</span>
+              <span onclick="setEmoji('🍓')" class="cursor-pointer hover:scale-125 transition">🍓</span>
+            </div>
+          </div>
+        </div>
+
         <div class="grid grid-cols-3 gap-2">
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Selling Price ($)</label>
@@ -330,11 +349,6 @@
             <label class="block text-xs font-semibold text-slate-600 mb-1">Initial Stock</label>
             <input type="number" id="prodStock" placeholder="0" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
           </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Product Image (Square recommended)</label>
-          <input type="file" id="prodImgInput" accept="image/*" class="w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100">
         </div>
 
         <div class="pt-2 flex justify-end gap-2">
@@ -381,78 +395,71 @@
       pushToCloud();
     }
 
-async function fetchFromCloud() {
-  if (!syncConfig.masterKey || !syncConfig.binId) return;
-  
-  // Clean up any hidden spaces from the inputs
-  const cleanKey = syncConfig.masterKey.trim();
-  const cleanBin = syncConfig.binId.trim();
+    async function fetchFromCloud() {
+      if (!syncConfig.masterKey || !syncConfig.binId) return;
+      
+      const cleanKey = syncConfig.masterKey.trim();
+      const cleanBin = syncConfig.binId.trim();
 
-  updateSyncStatus('syncing', 'Syncing...');
-  try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${cleanBin}/latest`, {
-      method: 'GET',
-      headers: { 
-        'X-Master-Key': cleanKey 
+      updateSyncStatus('syncing', 'Syncing...');
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${cleanBin}/latest`, {
+          method: 'GET',
+          headers: { 'X-Master-Key': cleanKey }
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.record) {
+            state = {
+              inventory: data.record.inventory || [],
+              sales: data.record.sales || [],
+              payouts: data.record.payouts || []
+            };
+            localStorage.setItem('squishy_pos_data', JSON.stringify(state));
+            updateSyncStatus('success', 'Synced');
+            renderAll();
+          }
+        } else {
+          updateSyncStatus('error', 'Sync Failed');
+        }
+      } catch (err) {
+        updateSyncStatus('error', 'Offline');
       }
-    });
-    
-    if (res.ok) {
-      const data = await res.json();
-      if (data.record) {
-        state = {
-          inventory: data.record.inventory || [],
-          sales: data.record.sales || [],
-          payouts: data.record.payouts || []
-        };
-        localStorage.setItem('squishy_pos_data', JSON.stringify(state));
-        updateSyncStatus('success', 'Synced');
-        renderAll();
+    }
+
+    async function pushToCloud() {
+      if (!syncConfig.masterKey || !syncConfig.binId) return;
+
+      const cleanKey = syncConfig.masterKey.trim();
+      const cleanBin = syncConfig.binId.trim();
+
+      // SAFETY GUARD: Never overwrite cloud data if local inventory is empty
+      if (!state.inventory || state.inventory.length === 0) {
+        console.log('Skipping cloud push: Local inventory is empty.');
+        return;
       }
-    } else {
-      console.error('Fetch error:', await res.text());
-      updateSyncStatus('error', 'Sync Failed');
+
+      updateSyncStatus('syncing', 'Saving...');
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${cleanBin}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': cleanKey
+          },
+          body: JSON.stringify(state)
+        });
+        
+        if (res.ok) {
+          updateSyncStatus('success', 'Synced');
+        } else {
+          updateSyncStatus('error', 'Error Saving');
+        }
+      } catch (err) {
+        updateSyncStatus('error', 'Offline');
+      }
     }
-  } catch (err) {
-    console.error('Network error:', err);
-    updateSyncStatus('error', 'Offline');
-  }
-}
-
-async function pushToCloud() {
-  if (!syncConfig.masterKey || !syncConfig.binId) return;
-
-  const cleanKey = syncConfig.masterKey.trim();
-  const cleanBin = syncConfig.binId.trim();
-
-  // SAFETY GUARD: Never overwrite cloud data if local inventory is empty
-  if (!state.inventory || state.inventory.length === 0) {
-    console.log('Skipping cloud push: Local inventory is empty.');
-    return;
-  }
-
-  updateSyncStatus('syncing', 'Saving...');
-  try {
-    const res = await fetch(`https://api.jsonbin.io/v3/b/${cleanBin}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Master-Key': cleanKey,
-        'X-Bin-Versioning': 'true'
-      },
-      body: JSON.stringify(state)
-    });
-    if (res.ok) {
-      updateSyncStatus('success', 'Synced');
-    } else {
-      console.error('Push error:', await res.text());
-      updateSyncStatus('error', 'Error Saving');
-    }
-  } catch (err) {
-    console.error('Network error:', err);
-    updateSyncStatus('error', 'Offline');
-  }
-}
 
     function updateSyncStatus(type, text) {
       const icon = document.getElementById('syncStatusIcon');
@@ -501,13 +508,11 @@ async function pushToCloud() {
           div.className = `bg-white p-3 rounded-2xl border ${item.stock > 0 ? 'border-slate-200 hover:border-pink-300' : 'border-rose-200 bg-rose-50/20'} shadow-sm text-center flex flex-col justify-between cursor-pointer transition`;
           div.onclick = () => addToCart(item.id);
 
-          const imgContent = item.img ? 
-            `<img src="${item.img}" class="w-full aspect-square object-cover rounded-xl mb-2">` : 
-            `<div class="w-full aspect-square bg-pink-50 rounded-xl flex items-center justify-center text-pink-300 text-2xl mb-2"><i class="fa-solid fa-cubes"></i></div>`;
+          const emojiIcon = item.emoji || '✨';
 
           div.innerHTML = `
             <div>
-              ${imgContent}
+              <div class="w-full aspect-square bg-pink-50 rounded-xl flex items-center justify-center text-5xl mb-2">${emojiIcon}</div>
               <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${item.name}</h3>
               <p class="text-pink-600 font-extrabold text-sm mt-0.5">$${(item.price || 0).toFixed(2)}</p>
             </div>
@@ -656,16 +661,13 @@ async function pushToCloud() {
         const div = document.createElement('div');
         div.className = 'bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3';
 
-        const imgContent = item.img ? 
-          `<img src="${item.img}" class="w-full aspect-square object-cover rounded-xl">` : 
-          `<div class="w-full aspect-square bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 text-3xl"><i class="fa-solid fa-image"></i></div>`;
-
+        const emojiIcon = item.emoji || '✨';
         const priceDisplay = item.price ? `$${item.price.toFixed(2)}` : 'Unset';
         const costDisplay = item.cost ? `$${item.cost.toFixed(2)}` : 'Unset';
         const marginDisplay = (item.price && item.cost) ? `$${(item.price - item.cost).toFixed(2)}` : 'N/A';
 
         div.innerHTML = `
-          ${imgContent}
+          <div class="w-full aspect-square bg-slate-50 rounded-xl flex items-center justify-center text-6xl">${emojiIcon}</div>
           <div>
             <h3 class="font-bold text-sm text-slate-800">${item.name}</h3>
             <div class="grid grid-cols-2 gap-1 text-xs mt-2">
@@ -684,9 +686,14 @@ async function pushToCloud() {
       });
     }
 
+    function setEmoji(emoji) {
+      document.getElementById('prodEmoji').value = emoji;
+    }
+
     function openProductModal(id = null) {
       document.getElementById('productForm').reset();
       document.getElementById('prodId').value = '';
+      document.getElementById('prodEmoji').value = '🐥';
       document.getElementById('productModalTitle').innerText = 'Add Product';
 
       if (id) {
@@ -694,6 +701,7 @@ async function pushToCloud() {
         if (item) {
           document.getElementById('prodId').value = item.id;
           document.getElementById('prodName').value = item.name;
+          document.getElementById('prodEmoji').value = item.emoji || '🐥';
           document.getElementById('prodPrice').value = item.price || '';
           document.getElementById('prodCost').value = item.cost || '';
           document.getElementById('prodStock').value = item.stock || '';
@@ -718,66 +726,31 @@ async function pushToCloud() {
       }
     }
 
-    async function saveProduct(e) {
+    function saveProduct(e) {
       e.preventDefault();
       const id = document.getElementById('prodId').value || Date.now().toString();
       const name = document.getElementById('prodName').value;
+      const emoji = document.getElementById('prodEmoji').value || '✨';
       const priceVal = document.getElementById('prodPrice').value;
       const costVal = document.getElementById('prodCost').value;
       const stockVal = document.getElementById('prodStock').value;
-      const imgInput = document.getElementById('prodImgInput');
 
       const price = priceVal !== '' ? parseFloat(priceVal) : 0;
       const cost = costVal !== '' ? parseFloat(costVal) : 0;
       const stock = stockVal !== '' ? parseInt(stockVal) : 0;
 
-      let img = '';
       const existing = state.inventory.find(i => i.id === id);
-      if (existing) img = existing.img;
-
-      if (imgInput.files && imgInput.files[0]) {
-        img = await convertBase64(imgInput.files[0]);
-      }
 
       if (existing) {
-        Object.assign(existing, { name, price, cost, stock, img });
+        Object.assign(existing, { name, emoji, price, cost, stock });
       } else {
-        state.inventory.push({ id, name, price, cost, stock, img });
+        state.inventory.push({ id, name, emoji, price, cost, stock });
       }
 
       closeProductModal();
       saveState();
     }
 
-   function convertBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        // Resize to maximum 200x200 square for compact storage
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 200;
-        const MAX_HEIGHT = 200;
-        canvas.width = MAX_WIDTH;
-        canvas.height = MAX_HEIGHT;
-
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, MAX_WIDTH, MAX_HEIGHT);
-
-        // Compress JPEG to 60% quality
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-        resolve(compressedBase64);
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-}
-
-    
     function renderBundleItemSelection() {
       const container = document.getElementById('bundleItemSelect');
       container.innerHTML = '';
@@ -793,7 +766,7 @@ async function pushToCloud() {
         div.innerHTML = `
           <label class="flex items-center gap-2 cursor-pointer flex-1">
             <input type="checkbox" value="${item.id}" onchange="toggleBundleQtyInput('${item.id}')" class="bundle-chk rounded text-pink-500 focus:ring-pink-400">
-            <span class="font-medium text-slate-700">${item.name}</span>
+            <span class="font-medium text-slate-700">${item.emoji || '✨'} ${item.name}</span>
           </label>
           <div class="flex items-center gap-1">
             <span class="text-[10px] text-slate-400">Bundle Qty:</span>
@@ -850,7 +823,7 @@ async function pushToCloud() {
           const li = document.createElement('li');
           li.className = 'py-1 flex justify-between items-center';
           li.innerHTML = `
-            <span><b>${item.name}</b> (+${entry.bundleQty} added to stock)</span>
+            <span><b>${item.emoji || ''} ${item.name}</b> (+${entry.bundleQty} added to stock)</span>
             <span>Unit Cost: <b>$${item.cost.toFixed(2)}</b></span>
           `;
           resultsList.appendChild(li);
