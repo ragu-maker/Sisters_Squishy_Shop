@@ -64,7 +64,7 @@
           </div>
         </div>
 
-        <!-- Tightened 3-column mobile layout grid -->
+        <!-- 3-column grid layout -->
         <div id="posGrid" class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3">
           <!-- Products inserted dynamically -->
         </div>
@@ -304,7 +304,10 @@
         <div class="bg-white p-3 rounded-xl inline-block border shadow-sm">
           <img id="qrImage" src="" alt="Payment QR Code" class="w-36 h-36 mx-auto">
         </div>
-        <p class="text-xs text-slate-400">Scan to pay exact total</p>
+        <div id="qrSubtext" class="text-xs text-slate-500 font-medium"></div>
+        <a id="venmoDirectBtn" href="#" target="_blank" class="hidden mt-2 inline-block bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs py-2 px-4 rounded-xl transition shadow-sm">
+          <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Open in Venmo App
+        </a>
       </div>
 
       <button onclick="finalizeOrder()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition shadow">
@@ -621,6 +624,7 @@
       selectedPayment = type;
       document.getElementById('cashBox').classList.add('hidden');
       document.getElementById('qrBox').classList.add('hidden');
+      document.getElementById('venmoDirectBtn').classList.add('hidden');
 
       const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
@@ -628,10 +632,24 @@
         document.getElementById('cashBox').classList.remove('hidden');
         document.getElementById('cashTendered').value = '';
         document.getElementById('changeDueVal').innerText = '$0.00';
-      } else {
+      } else if (type === 'venmo') {
         document.getElementById('qrBox').classList.remove('hidden');
-        document.getElementById('qrLabel').innerText = `Scan to pay $${total.toFixed(2)} via ${type.toUpperCase()}`;
-        document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${type}_payment`;
+        document.getElementById('qrLabel').innerText = `Scan to pay $${total.toFixed(2)} via Venmo`;
+        document.getElementById('qrSubtext').innerText = `Sending to @Raul-Aguirre-12`;
+        
+        const venmoUrl = `https://venmo.com/Raul-Aguirre-12?txn=pay&amount=${total.toFixed(2)}&note=${encodeURIComponent("Sisters Squishy Shop Purchase")}`;
+        document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(venmoUrl)}`;
+        
+        const venmoBtn = document.getElementById('venmoDirectBtn');
+        venmoBtn.href = venmoUrl;
+        venmoBtn.classList.remove('hidden');
+      } else if (type === 'zelle') {
+        document.getElementById('qrBox').classList.remove('hidden');
+        document.getElementById('qrLabel').innerText = `Pay $${total.toFixed(2)} via Zelle`;
+        document.getElementById('qrSubtext').innerHTML = `Zelle Phone: <b class="text-slate-800 select-all font-bold">512-484-8717</b>`;
+        
+        const zellePayload = `Zelle Payment to 512-484-8717 for $${total.toFixed(2)} - Sisters Squishy Shop`;
+        document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(zellePayload)}`;
       }
     }
 
