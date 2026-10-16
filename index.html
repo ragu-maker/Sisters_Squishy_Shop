@@ -133,14 +133,25 @@
           </div>
         </div>
 
-        <div class="pt-4 border-t border-slate-100">
-          <label class="block text-xs font-semibold text-slate-600 mb-2">Select Included Items & Quantity Received in Bundle:</label>
-          <div id="bundleItemSelect" class="space-y-2 max-h-72 overflow-y-auto pr-2 border border-slate-100 rounded-xl p-3 bg-slate-50">
+        <div class="pt-4 border-t border-slate-100 space-y-3">
+          <label class="block text-xs font-semibold text-slate-600">Select Included Items & Quantity Received in Bundle:</label>
+          
+          <!-- QUICK ADD ITEM BOX INSIDE BUNDLE ALLOCATOR -->
+          <div class="p-3 bg-pink-50/60 rounded-xl border border-pink-100 space-y-2">
+            <p class="text-xs font-bold text-pink-900"><i class="fa-solid fa-circle-plus text-pink-500 mr-1"></i> Missing an item? Quick Add Product:</p>
+            <div class="flex gap-2">
+              <input type="text" id="bundleNewName" placeholder="Item name (e.g. Blue Star Squishy)" class="flex-1 border border-slate-200 p-2 rounded-xl text-xs bg-white focus:ring-2 focus:ring-pink-400">
+              <input type="text" id="bundleNewEmoji" placeholder="✨" class="w-14 text-center border border-slate-200 p-2 rounded-xl text-base bg-white focus:ring-2 focus:ring-pink-400">
+              <button type="button" onclick="quickAddBundleItem()" class="bg-pink-500 hover:bg-pink-600 text-white font-semibold text-xs px-4 py-2 rounded-xl transition shadow-sm">Add Item</button>
+            </div>
+          </div>
+
+          <div id="bundleItemSelect" class="space-y-2 max-h-60 overflow-y-auto pr-2 border border-slate-100 rounded-xl p-3 bg-slate-50">
             <!-- Items listed dynamically -->
           </div>
         </div>
 
-        <button onclick="calculateBundleAllocation()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl text-sm transition">
+        <button onclick="calculateBundleAllocation()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl text-sm transition shadow">
           Calculate Unit Costs & Add Stock
         </button>
 
@@ -234,4 +245,742 @@
 
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-semibold text-slate-600
+          <label class="block text-xs font-semibold text-slate-600 mb-1">JSONBin Master Key ($2b$10$...)</label>
+          <input type="password" id="cfgMasterKey" placeholder="Paste your Master Key here" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Bin ID</label>
+          <input type="text" id="cfgBinId" value="6ad1069affd5d160536e4ec5" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
+        </div>
+      </div>
+
+      <div class="pt-2 flex justify-end gap-2">
+        <button onclick="saveSyncSettings()" class="bg-pink-500 hover:bg-pink-600 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition">
+          Save Settings & Sync
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAYMENT MODAL -->
+  <div id="paymentModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl border border-slate-100">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-lg text-slate-800">Select Payment Method</h3>
+        <button onclick="closePaymentModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="selectPaymentType('cash')" class="p-3 border rounded-xl text-center hover:border-pink-500 focus:border-pink-500 bg-slate-50 hover:bg-pink-50 transition">
+          <i class="fa-solid fa-money-bill-wave text-emerald-600 text-xl block mb-1"></i>
+          <span class="text-xs font-semibold text-slate-700">Cash</span>
+        </button>
+        <button onclick="selectPaymentType('venmo')" class="p-3 border rounded-xl text-center hover:border-pink-500 focus:border-pink-500 bg-slate-50 hover:bg-pink-50 transition">
+          <i class="fa-solid fa-v text-sky-500 text-xl block mb-1"></i>
+          <span class="text-xs font-semibold text-slate-700">Venmo</span>
+        </button>
+        <button onclick="selectPaymentType('zelle')" class="p-3 border rounded-xl text-center hover:border-pink-500 focus:border-pink-500 bg-slate-50 hover:bg-pink-50 transition">
+          <i class="fa-solid fa-bolt text-purple-600 text-xl block mb-1"></i>
+          <span class="text-xs font-semibold text-slate-700">Zelle</span>
+        </button>
+      </div>
+
+      <!-- Cash Calculation Box -->
+      <div id="cashBox" class="hidden space-y-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+        <div class="flex justify-between items-center">
+          <label class="text-xs font-semibold text-slate-600">Cash Given ($):</label>
+          <input type="number" id="cashTendered" oninput="calculateChange()" step="0.01" class="w-28 border border-slate-300 p-1.5 rounded-lg text-right text-sm">
+        </div>
+        <div class="flex justify-between items-center text-sm font-bold">
+          <span>Change Due:</span>
+          <span id="changeDueVal" class="text-emerald-600">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Digital QR Code Display -->
+      <div id="qrBox" class="hidden text-center space-y-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
+        <p id="qrLabel" class="text-xs font-semibold text-slate-700"></p>
+        <div class="bg-white p-3 rounded-xl inline-block border shadow-sm">
+          <img id="qrImage" src="" alt="Payment QR Code" class="w-36 h-36 mx-auto">
+        </div>
+        <p class="text-xs text-slate-400">Scan to pay exact total</p>
+      </div>
+
+      <button onclick="finalizeOrder()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl transition shadow">
+        Complete Sale
+      </button>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT PRODUCT MODAL -->
+  <div id="productModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-xl border border-slate-100">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 id="productModalTitle" class="font-bold text-lg text-slate-800">Add Product</h3>
+        <button onclick="closeProductModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <form id="productForm" onsubmit="saveProduct(event)" class="space-y-3">
+        <input type="hidden" id="prodId">
+        
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Product Name</label>
+          <input type="text" id="prodName" required placeholder="e.g. Yellow Duck Squishy" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Emoji Icon (Type or pick below)</label>
+          <div class="flex gap-2">
+            <input type="text" id="prodEmoji" required placeholder="✨" class="w-16 text-center border border-slate-200 p-2 rounded-xl text-lg focus:ring-2 focus:ring-pink-400">
+            <div class="flex flex-wrap gap-1 items-center bg-slate-50 border border-slate-200 p-1.5 rounded-xl flex-1 text-base">
+              <span onclick="setEmoji('🐥')" class="cursor-pointer hover:scale-125 transition">🐥</span>
+              <span onclick="setEmoji('🦆')" class="cursor-pointer hover:scale-125 transition">🦆</span>
+              <span onclick="setEmoji('🐱')" class="cursor-pointer hover:scale-125 transition">🐱</span>
+              <span onclick="setEmoji('🐰')" class="cursor-pointer hover:scale-125 transition">🐰</span>
+              <span onclick="setEmoji('🐻')" class="cursor-pointer hover:scale-125 transition">🐻</span>
+              <span onclick="setEmoji('🐼')" class="cursor-pointer hover:scale-125 transition">🐼</span>
+              <span onclick="setEmoji('🦄')" class="cursor-pointer hover:scale-125 transition">🦄</span>
+              <span onclick="setEmoji('🐸')" class="cursor-pointer hover:scale-125 transition">🐸</span>
+              <span onclick="setEmoji('🐙')" class="cursor-pointer hover:scale-125 transition">🐙</span>
+              <span onclick="setEmoji('🍓')" class="cursor-pointer hover:scale-125 transition">🍓</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Selling Price ($)</label>
+            <input type="number" id="prodPrice" step="0.01" placeholder="Optional" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Unit Cost ($)</label>
+            <input type="number" id="prodCost" step="0.01" placeholder="Optional" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Initial Stock</label>
+            <input type="number" id="prodStock" placeholder="0" class="w-full border border-slate-200 p-2.5 rounded-xl text-xs focus:ring-2 focus:ring-pink-400">
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end gap-2">
+          <button type="button" onclick="closeProductModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100">Cancel</button>
+          <button type="submit" class="bg-pink-500 hover:bg-pink-600 text-white font-semibold text-xs px-4 py-2 rounded-xl transition">Save Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- APPLICATION LOGIC -->
+  <script>
+    let state = {
+      inventory: [],
+      sales: [],
+      payouts: []
+    };
+
+    let cart = [];
+    let selectedPayment = 'cash';
+
+    let syncConfig = {
+      binId: localStorage.getItem('jsonbin_bin_id') || '6ad1069affd5d160536e4ec5',
+      masterKey: localStorage.getItem('jsonbin_master_key') || ''
+    };
+
+    window.onload = function() {
+      document.getElementById('payoutDate').value = new Date().toISOString().split('T')[0];
+      
+      if (syncConfig.masterKey && syncConfig.binId) {
+        fetchFromCloud();
+      } else {
+        const cached = localStorage.getItem('squishy_pos_data');
+        if (cached) {
+          state = JSON.parse(cached);
+        }
+        renderAll();
+      }
+    };
+
+    function saveState() {
+      localStorage.setItem('squishy_pos_data', JSON.stringify(state));
+      renderAll();
+      pushToCloud();
+    }
+
+    async function fetchFromCloud() {
+      if (!syncConfig.masterKey || !syncConfig.binId) return;
+      
+      const cleanKey = syncConfig.masterKey.trim();
+      const cleanBin = syncConfig.binId.trim();
+
+      updateSyncStatus('syncing', 'Syncing...');
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${cleanBin}/latest`, {
+          method: 'GET',
+          headers: { 'X-Master-Key': cleanKey }
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          if (data.record) {
+            state = {
+              inventory: data.record.inventory || [],
+              sales: data.record.sales || [],
+              payouts: data.record.payouts || []
+            };
+            localStorage.setItem('squishy_pos_data', JSON.stringify(state));
+            updateSyncStatus('success', 'Synced');
+            renderAll();
+          }
+        } else {
+          updateSyncStatus('error', 'Sync Failed');
+        }
+      } catch (err) {
+        updateSyncStatus('error', 'Offline');
+      }
+    }
+
+    async function pushToCloud() {
+      if (!syncConfig.masterKey || !syncConfig.binId) return;
+
+      const cleanKey = syncConfig.masterKey.trim();
+      const cleanBin = syncConfig.binId.trim();
+
+      // SAFETY GUARD: Never overwrite cloud data if local inventory is empty
+      if (!state.inventory || state.inventory.length === 0) {
+        console.log('Skipping cloud push: Local inventory is empty.');
+        return;
+      }
+
+      updateSyncStatus('syncing', 'Saving...');
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${cleanBin}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Master-Key': cleanKey
+          },
+          body: JSON.stringify(state)
+        });
+        
+        if (res.ok) {
+          updateSyncStatus('success', 'Synced');
+        } else {
+          updateSyncStatus('error', 'Error Saving');
+        }
+      } catch (err) {
+        updateSyncStatus('error', 'Offline');
+      }
+    }
+
+    function updateSyncStatus(type, text) {
+      const icon = document.getElementById('syncStatusIcon');
+      const label = document.getElementById('syncStatusText');
+      label.innerText = text;
+      
+      if (type === 'syncing') {
+        icon.className = 'fa-solid fa-rotate text-amber-500 animate-spin';
+      } else if (type === 'success') {
+        icon.className = 'fa-solid fa-cloud-check text-emerald-500';
+      } else if (type === 'error') {
+        icon.className = 'fa-solid fa-cloud-xmark text-rose-500';
+      }
+    }
+
+    function switchTab(tab) {
+      ['pos', 'inventory', 'bundle', 'reports'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        document.getElementById(`tab-${t}`).classList.remove('tab-active');
+        document.getElementById(`tab-${t}`).classList.add('text-slate-500');
+      });
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).classList.add('tab-active');
+      document.getElementById(`tab-${tab}`).classList.remove('text-slate-500');
+
+      if (tab === 'bundle') renderBundleItemSelection();
+      if (tab === 'reports') renderReports();
+    }
+
+    function renderAll() {
+      renderPosGrid();
+      renderCart();
+      renderInventoryGrid();
+      renderReports();
+    }
+
+    function renderPosGrid() {
+      const search = document.getElementById('posSearch').value.toLowerCase();
+      const grid = document.getElementById('posGrid');
+      grid.innerHTML = '';
+
+      state.inventory
+        .filter(item => item.name.toLowerCase().includes(search))
+        .forEach(item => {
+          const div = document.createElement('div');
+          div.className = `bg-white p-3 rounded-2xl border ${item.stock > 0 ? 'border-slate-200 hover:border-pink-300' : 'border-rose-200 bg-rose-50/20'} shadow-sm text-center flex flex-col justify-between cursor-pointer transition`;
+          div.onclick = () => addToCart(item.id);
+
+          const emojiIcon = item.emoji || '✨';
+
+          div.innerHTML = `
+            <div>
+              <div class="w-full aspect-square bg-pink-50 rounded-xl flex items-center justify-center text-5xl mb-2">${emojiIcon}</div>
+              <h3 class="font-bold text-xs text-slate-800 line-clamp-1">${item.name}</h3>
+              <p class="text-pink-600 font-extrabold text-sm mt-0.5">$${(item.price || 0).toFixed(2)}</p>
+            </div>
+            <div class="mt-2 text-[10px] font-semibold ${item.stock > 0 ? 'text-slate-400' : 'text-rose-500'}">
+              ${item.stock > 0 ? `${item.stock} in stock` : 'Out of Stock'}
+            </div>
+          `;
+          grid.appendChild(div);
+        });
+    }
+
+    function addToCart(id) {
+      const item = state.inventory.find(i => i.id === id);
+      if (!item || item.stock <= 0) return;
+
+      const cartItem = cart.find(c => c.id === id);
+      if (cartItem) {
+        if (cartItem.qty < item.stock) cartItem.qty++;
+      } else {
+        cart.push({ id: item.id, name: item.name, price: item.price || 0, cost: item.cost || 0, qty: 1 });
+      }
+      renderCart();
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cartItems');
+      container.innerHTML = '';
+
+      if (cart.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">Cart is empty.</p>`;
+        document.getElementById('cartTotal').innerText = '$0.00';
+        return;
+      }
+
+      let total = 0;
+      cart.forEach(item => {
+        const itemTotal = item.price * item.qty;
+        total += itemTotal;
+
+        const div = document.createElement('div');
+        div.className = 'py-2 flex justify-between items-center text-xs';
+        div.innerHTML = `
+          <div>
+            <p class="font-bold text-slate-800">${item.name}</p>
+            <p class="text-slate-400">$${item.price.toFixed(2)} each</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="updateCartQty('${item.id}', -1)" class="w-5 h-5 bg-slate-100 rounded text-slate-600 hover:bg-slate-200 font-bold">-</button>
+            <span class="font-semibold text-slate-700">${item.qty}</span>
+            <button onclick="updateCartQty('${item.id}', 1)" class="w-5 h-5 bg-slate-100 rounded text-slate-600 hover:bg-slate-200 font-bold">+</button>
+            <span class="font-bold text-slate-800 w-12 text-right">$${itemTotal.toFixed(2)}</span>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById('cartTotal').innerText = `$${total.toFixed(2)}`;
+    }
+
+    function updateCartQty(id, change) {
+      const item = cart.find(c => c.id === id);
+      if (!item) return;
+      const inv = state.inventory.find(i => i.id === id);
+
+      item.qty += change;
+      if (item.qty > inv.stock) item.qty = inv.stock;
+      if (item.qty <= 0) {
+        cart = cart.filter(c => c.id !== id);
+      }
+      renderCart();
+    }
+
+    function clearCart() {
+      cart = [];
+      renderCart();
+    }
+
+    function checkout() {
+      if (cart.length === 0) return;
+      document.getElementById('paymentModal').classList.remove('hidden');
+      selectPaymentType('cash');
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentModal').classList.add('hidden');
+    }
+
+    function selectPaymentType(type) {
+      selectedPayment = type;
+      document.getElementById('cashBox').classList.add('hidden');
+      document.getElementById('qrBox').classList.add('hidden');
+
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+      if (type === 'cash') {
+        document.getElementById('cashBox').classList.remove('hidden');
+        document.getElementById('cashTendered').value = '';
+        document.getElementById('changeDueVal').innerText = '$0.00';
+      } else {
+        document.getElementById('qrBox').classList.remove('hidden');
+        document.getElementById('qrLabel').innerText = `Scan to pay $${total.toFixed(2)} via ${type.toUpperCase()}`;
+        document.getElementById('qrImage').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${type}_payment`;
+      }
+    }
+
+    function calculateChange() {
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const tendered = parseFloat(document.getElementById('cashTendered').value) || 0;
+      const change = Math.max(0, tendered - total);
+      document.getElementById('changeDueVal').innerText = `$${change.toFixed(2)}`;
+    }
+
+    function finalizeOrder() {
+      const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const totalCost = cart.reduce((sum, item) => sum + (item.cost * item.qty), 0);
+      const profit = total - totalCost;
+
+      cart.forEach(cItem => {
+        const invItem = state.inventory.find(i => i.id === cItem.id);
+        if (invItem) {
+          invItem.stock -= cItem.qty;
+        }
+      });
+
+      state.sales.push({
+        id: Date.now().toString(),
+        timestamp: new Date().toISOString(),
+        items: [...cart],
+        paymentType: selectedPayment,
+        total: total,
+        cost: totalCost,
+        profit: profit
+      });
+
+      clearCart();
+      closePaymentModal();
+      saveState();
+      alert('Sale Completed Successfully!');
+    }
+
+    function renderInventoryGrid() {
+      const grid = document.getElementById('inventoryGrid');
+      grid.innerHTML = '';
+
+      state.inventory.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3';
+
+        const emojiIcon = item.emoji || '✨';
+        const priceDisplay = item.price ? `$${item.price.toFixed(2)}` : 'Unset';
+        const costDisplay = item.cost ? `$${item.cost.toFixed(2)}` : 'Unset';
+        const marginDisplay = (item.price && item.cost) ? `$${(item.price - item.cost).toFixed(2)}` : 'N/A';
+
+        div.innerHTML = `
+          <div class="w-full aspect-square bg-slate-50 rounded-xl flex items-center justify-center text-6xl">${emojiIcon}</div>
+          <div>
+            <h3 class="font-bold text-sm text-slate-800">${item.name}</h3>
+            <div class="grid grid-cols-2 gap-1 text-xs mt-2">
+              <span class="text-slate-500">Price: <b class="text-slate-800">${priceDisplay}</b></span>
+              <span class="text-slate-500">Cost: <b class="text-slate-800">${costDisplay}</b></span>
+              <span class="text-slate-500">Margin: <b class="text-emerald-600">${marginDisplay}</b></span>
+              <span class="text-slate-500">Stock: <b class="${item.stock < 5 ? 'text-rose-500 font-bold' : 'text-slate-800'}">${item.stock || 0}</b></span>
+            </div>
+          </div>
+          <div class="flex gap-2 pt-2 border-t border-slate-100">
+            <button onclick="editProduct('${item.id}')" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-1.5 rounded-lg transition">Edit</button>
+            <button onclick="deleteProduct('${item.id}')" class="px-2 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs rounded-lg transition"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        `;
+        grid.appendChild(div);
+      });
+    }
+
+    function setEmoji(emoji) {
+      document.getElementById('prodEmoji').value = emoji;
+    }
+
+    function openProductModal(id = null) {
+      document.getElementById('productForm').reset();
+      document.getElementById('prodId').value = '';
+      document.getElementById('prodEmoji').value = '';
+      document.getElementById('productModalTitle').innerText = 'Add Product';
+
+      if (id) {
+        const item = state.inventory.find(i => i.id === id);
+        if (item) {
+          document.getElementById('prodId').value = item.id;
+          document.getElementById('prodName').value = item.name;
+          document.getElementById('prodEmoji').value = item.emoji || '';
+          document.getElementById('prodPrice').value = item.price || '';
+          document.getElementById('prodCost').value = item.cost || '';
+          document.getElementById('prodStock').value = item.stock || '';
+          document.getElementById('productModalTitle').innerText = 'Edit Product';
+        }
+      }
+      document.getElementById('productModal').classList.remove('hidden');
+    }
+
+    function closeProductModal() {
+      document.getElementById('productModal').classList.add('hidden');
+    }
+
+    function editProduct(id) {
+      openProductModal(id);
+    }
+
+    function deleteProduct(id) {
+      if (confirm('Are you sure you want to delete this product?')) {
+        state.inventory = state.inventory.filter(i => i.id !== id);
+        saveState();
+      }
+    }
+
+    function saveProduct(e) {
+      e.preventDefault();
+      const id = document.getElementById('prodId').value || Date.now().toString();
+      const name = document.getElementById('prodName').value;
+      const emoji = document.getElementById('prodEmoji').value || '✨';
+      const priceVal = document.getElementById('prodPrice').value;
+      const costVal = document.getElementById('prodCost').value;
+      const stockVal = document.getElementById('prodStock').value;
+
+      const price = priceVal !== '' ? parseFloat(priceVal) : 0;
+      const cost = costVal !== '' ? parseFloat(costVal) : 0;
+      const stock = stockVal !== '' ? parseInt(stockVal) : 0;
+
+      const existing = state.inventory.find(i => i.id === id);
+
+      if (existing) {
+        Object.assign(existing, { name, emoji, price, cost, stock });
+      } else {
+        state.inventory.push({ id, name, emoji, price, cost, stock });
+      }
+
+      closeProductModal();
+      saveState();
+    }
+
+    function quickAddBundleItem() {
+      const nameInput = document.getElementById('bundleNewName');
+      const emojiInput = document.getElementById('bundleNewEmoji');
+      const name = nameInput.value.trim();
+      
+      if (!name) {
+        alert('Please enter a product name');
+        return;
+      }
+
+      const emoji = emojiInput.value.trim() || '✨';
+      const newItem = {
+        id: Date.now().toString(),
+        name: name,
+        emoji: emoji,
+        price: 0,
+        cost: 0,
+        stock: 0
+      };
+
+      state.inventory.push(newItem);
+      saveState();
+
+      // Clear quick inputs and refresh bundle item checkboxes
+      nameInput.value = '';
+      emojiInput.value = '';
+      renderBundleItemSelection();
+
+      // Automatically check the newly added item for convenience
+      const newCheckbox = document.querySelector(`.bundle-chk[value="${newItem.id}"]`);
+      if (newCheckbox) {
+        newCheckbox.checked = true;
+        toggleBundleQtyInput(newItem.id);
+      }
+    }
+
+    function renderBundleItemSelection() {
+      const container = document.getElementById('bundleItemSelect');
+      container.innerHTML = '';
+
+      if (state.inventory.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">No products in inventory yet. Add products above or in the Inventory tab!</p>`;
+        return;
+      }
+
+      state.inventory.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between text-xs py-1.5 border-b border-slate-100 last:border-0';
+        div.innerHTML = `
+          <label class="flex items-center gap-2 cursor-pointer flex-1">
+            <input type="checkbox" value="${item.id}" onchange="toggleBundleQtyInput('${item.id}')" class="bundle-chk rounded text-pink-500 focus:ring-pink-400">
+            <span class="font-medium text-slate-700">${item.emoji || '✨'} ${item.name}</span>
+          </label>
+          <div class="flex items-center gap-1">
+            <span class="text-[10px] text-slate-400">Bundle Qty:</span>
+            <input type="number" id="bundle-qty-${item.id}" min="1" value="1" disabled class="bundle-qty-input w-16 p-1 border border-slate-200 rounded text-right bg-slate-100">
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function toggleBundleQtyInput(id) {
+      const chk = document.querySelector(`.bundle-chk[value="${id}"]`);
+      const qtyInput = document.getElementById(`bundle-qty-${id}`);
+      if (chk && qtyInput) {
+        qtyInput.disabled = !chk.checked;
+        qtyInput.className = `bundle-qty-input w-16 p-1 border rounded text-right ${chk.checked ? 'bg-white border-pink-300 font-bold' : 'bg-slate-100 border-slate-200'}`;
+      }
+    }
+
+    function calculateBundleAllocation() {
+      const totalBundleCost = parseFloat(document.getElementById('bundleTotalCost').value);
+      if (isNaN(totalBundleCost) || totalBundleCost <= 0) {
+        alert('Please enter a valid total bundle cost');
+        return;
+      }
+
+      const selectedCheckboxes = Array.from(document.querySelectorAll('.bundle-chk:checked'));
+      if (selectedCheckboxes.length === 0) {
+        alert('Please select at least one item included in this bundle');
+        return;
+      }
+
+      let totalUnitsInBundle = 0;
+      const itemsToUpdate = [];
+
+      selectedCheckboxes.forEach(cb => {
+        const id = cb.value;
+        const qty = parseInt(document.getElementById(`bundle-qty-${id}`).value) || 1;
+        totalUnitsInBundle += qty;
+        itemsToUpdate.push({ id, bundleQty: qty });
+      });
+
+      const costPerIndividualUnit = totalBundleCost / totalUnitsInBundle;
+
+      const resultsList = document.getElementById('bundleResultsList');
+      resultsList.innerHTML = '';
+
+      itemsToUpdate.forEach(entry => {
+        const item = state.inventory.find(i => i.id === entry.id);
+        if (item) {
+          item.cost = parseFloat(costPerIndividualUnit.toFixed(2));
+          item.stock = (item.stock || 0) + entry.bundleQty;
+
+          const li = document.createElement('li');
+          li.className = 'py-1 flex justify-between items-center';
+          li.innerHTML = `
+            <span><b>${item.emoji || ''} ${item.name}</b> (+${entry.bundleQty} added to stock)</span>
+            <span>Unit Cost: <b>$${item.cost.toFixed(2)}</b></span>
+          `;
+          resultsList.appendChild(li);
+        }
+      });
+
+      document.getElementById('bundleResults').classList.remove('hidden');
+      saveState();
+    }
+
+    function renderReports() {
+      const totalRev = state.sales.reduce((sum, s) => sum + s.total, 0);
+      const totalCost = state.sales.reduce((sum, s) => sum + s.cost, 0);
+      const totalProfit = totalRev - totalCost;
+      const totalItems = state.sales.reduce((sum, s) => sum + s.items.reduce((iSum, item) => iSum + item.qty, 0), 0);
+
+      document.getElementById('repRevenue').innerText = `$${totalRev.toFixed(2)}`;
+      document.getElementById('repCost').innerText = `$${totalCost.toFixed(2)}`;
+      document.getElementById('repProfit').innerText = `$${totalProfit.toFixed(2)}`;
+      document.getElementById('repItemsSold').innerText = totalItems;
+
+      renderDailyPayout();
+      renderSalesHistory();
+    }
+
+    function renderDailyPayout() {
+      const selectedDate = document.getElementById('payoutDate').value;
+      if (!selectedDate) return;
+
+      const daySales = state.sales.filter(s => s.timestamp.startsWith(selectedDate));
+      const dayProfit = daySales.reduce((sum, s) => sum + s.profit, 0);
+
+      document.getElementById('dailyProfitVal').innerText = `$${dayProfit.toFixed(2)}`;
+
+      const payoutRecord = state.payouts.find(p => p.date === selectedDate);
+      const statusLbl = document.getElementById('dailyPayoutStatus');
+      const btn = document.getElementById('payoutBtn');
+
+      if (payoutRecord && payoutRecord.paid) {
+        statusLbl.innerText = `Paid ($${payoutRecord.amount.toFixed(2)})`;
+        statusLbl.className = 'text-sm font-semibold text-emerald-600 mt-1';
+        btn.innerText = 'Mark as Unpaid';
+        btn.className = 'bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs px-4 py-2 rounded-xl transition';
+      } else {
+        statusLbl.innerText = 'Unpaid';
+        statusLbl.className = 'text-sm font-semibold text-amber-600 mt-1';
+        btn.innerText = 'Mark Profit as Distributed';
+        btn.className = 'bg-pink-500 hover:bg-pink-600 text-white font-semibold text-xs px-4 py-2 rounded-xl transition';
+      }
+    }
+
+    function toggleDailyPayout() {
+      const selectedDate = document.getElementById('payoutDate').value;
+      if (!selectedDate) return;
+
+      const daySales = state.sales.filter(s => s.timestamp.startsWith(selectedDate));
+      const dayProfit = daySales.reduce((sum, s) => sum + s.profit, 0);
+
+      let record = state.payouts.find(p => p.date === selectedDate);
+      if (record) {
+        record.paid = !record.paid;
+        record.amount = dayProfit;
+      } else {
+        state.payouts.push({ date: selectedDate, paid: true, amount: dayProfit });
+      }
+
+      saveState();
+    }
+
+    function renderSalesHistory() {
+      const tbody = document.getElementById('salesHistoryTable');
+      tbody.innerHTML = '';
+
+      const sortedSales = [...state.sales].reverse();
+      sortedSales.forEach(s => {
+        const dateStr = new Date(s.timestamp).toLocaleString();
+        const itemsStr = s.items.map(i => `${i.name} (${i.qty})`).join(', ');
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-3 text-slate-500">${dateStr}</td>
+          <td class="p-3 font-medium text-slate-800">${itemsStr}</td>
+          <td class="p-3 capitalize">${s.paymentType}</td>
+          <td class="p-3 font-bold text-slate-800">$${s.total.toFixed(2)}</td>
+          <td class="p-3 font-bold text-emerald-600">$${s.profit.toFixed(2)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openSyncSettings() {
+      document.getElementById('cfgMasterKey').value = syncConfig.masterKey;
+      document.getElementById('cfgBinId').value = syncConfig.binId;
+      document.getElementById('syncModal').classList.remove('hidden');
+    }
+
+    function closeSyncSettings() {
+      document.getElementById('syncModal').classList.add('hidden');
+    }
+
+    function saveSyncSettings() {
+      syncConfig.masterKey = document.getElementById('cfgMasterKey').value.trim();
+      syncConfig.binId = document.getElementById('cfgBinId').value.trim();
+
+      localStorage.setItem('jsonbin_master_key', syncConfig.masterKey);
+      localStorage.setItem('jsonbin_bin_id', syncConfig.binId);
+
+      closeSyncSettings();
+      fetchFromCloud();
+    }
+  </script>
+</body>
+</html>
