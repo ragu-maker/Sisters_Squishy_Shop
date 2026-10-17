@@ -116,8 +116,8 @@
     <div id="view-bundle" class="hidden space-y-6 max-w-3xl mx-auto">
       <div class="bg-white/95 backdrop-blur-sm p-6 rounded-2xl shadow-sm border border-slate-200/60 space-y-4">
         <div>
-          <h2 class="font-bold text-xl text-slate-800">Variety Bundle Cost Allocator</h2>
-          <p class="text-sm text-slate-500">Specify item quantities included in a bulk purchase to calculate exact per-unit costs and automatically update inventory stock levels.</p>
+          <h2 class="font-bold text-xl text-slate-800">Variety Bundle Weighted Cost Allocator</h2>
+          <p class="text-sm text-slate-500">Specify quantities added to stock and cost weights (shares) per item to calculate precise proportional unit costs.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
@@ -128,13 +128,13 @@
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Allocation Method</label>
             <select id="bundleMethod" class="w-full border border-slate-200 p-2.5 rounded-xl text-sm focus:ring-2 focus:ring-pink-400">
-              <option value="equal">Equal Cost per Individual Unit</option>
+              <option value="weighted">Weighted Cost per Unit Share</option>
             </select>
           </div>
         </div>
 
         <div class="pt-4 border-t border-slate-100 space-y-3">
-          <label class="block text-xs font-semibold text-slate-600">Select Included Items & Quantity Received in Bundle:</label>
+          <label class="block text-xs font-semibold text-slate-600">Select Included Items, Qty Added, & Cost Weight:</label>
           
           <div class="p-3 bg-pink-50/60 rounded-xl border border-pink-100 space-y-2">
             <p class="text-xs font-bold text-pink-900"><i class="fa-solid fa-circle-plus text-pink-500 mr-1"></i> Missing an item? Quick Add Product:</p>
@@ -151,11 +151,11 @@
         </div>
 
         <button onclick="calculateBundleAllocation()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl text-sm transition shadow">
-          Calculate Unit Costs & Add Stock
+          Calculate Weighted Unit Costs & Add Stock
         </button>
 
         <div id="bundleResults" class="hidden p-4 bg-pink-50 rounded-xl border border-pink-200 space-y-2">
-          <h3 class="font-bold text-sm text-pink-900">Allocation Calculated & Stock Updated!</h3>
+          <h3 class="font-bold text-sm text-pink-900">Weighted Allocation Calculated & Stock Updated!</h3>
           <ul id="bundleResultsList" class="text-xs text-pink-800 divide-y divide-pink-100"></ul>
         </div>
       </div>
@@ -298,17 +298,14 @@
 
       <!-- Digital Payment Display Box -->
       <div id="qrBox" class="hidden text-center space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-        <!-- Prominent Large Payment Label -->
         <div id="qrLabel" class="text-slate-800"></div>
 
-        <!-- QR Code Container (Used for Venmo) -->
         <div id="qrImageWrapper" class="bg-white p-3 rounded-xl inline-block border shadow-sm max-w-[200px]">
           <img id="qrImage" src="" alt="Payment QR Code" class="w-full h-auto mx-auto rounded-lg">
         </div>
 
         <div id="qrSubtext" class="text-xs text-slate-600"></div>
 
-        <!-- Venmo Direct App Button -->
         <a id="venmoDirectBtn" href="#" target="_blank" class="hidden mt-1 inline-block bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs py-2 px-4 rounded-xl transition shadow-sm">
           <i class="fa-solid fa-arrow-up-right-from-square mr-1"></i> Open in Venmo App
         </a>
@@ -430,10 +427,14 @@
         if (res.ok) {
           const data = await res.json();
           if (data.record) {
+            const salesMap = new Map(state.sales.map(s => [s.id, s]));
+            (data.record.sales || []).forEach(s => salesMap.set(s.id, s));
+            const mergedSales = Array.from(salesMap.values()).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
             state = {
-              inventory: data.record.inventory || [],
-              sales: data.record.sales || [],
-              payouts: data.record.payouts || []
+              inventory: data.record.inventory || state.inventory,
+              sales: mergedSales,
+              payouts: data.record.payouts || state.payouts
             };
             localStorage.setItem('squishy_pos_data', JSON.stringify(state));
             updateSyncStatus('success', 'Synced');
@@ -835,7 +836,7 @@
       const newCheckbox = document.querySelector(`.bundle-chk[value="${newItem.id}"]`);
       if (newCheckbox) {
         newCheckbox.checked = true;
-        toggleBundleQtyInput(newItem.id);
+        toggleBundleInputs(newItem.id);
       }
     }
 
@@ -854,28 +855,34 @@
 
       sortedInventory.forEach(item => {
         const div = document.createElement('div');
-        div.className = 'flex items-center justify-between text-xs py-1.5 border-b border-slate-100 last:border-0';
+        div.className = 'flex items-center justify-between text-xs py-2 border-b border-slate-100 last:border-0 gap-2';
         div.innerHTML = `
-          <label class="flex items-center gap-2 cursor-pointer flex-1">
-            <input type="checkbox" value="${item.id}" onchange="toggleBundleQtyInput('${item.id}')" class="bundle-chk rounded text-pink-500 focus:ring-pink-400">
-            <span class="font-medium text-slate-700">${item.emoji || '✨'} ${item.name}</span>
+          <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+            <input type="checkbox" value="${item.id}" onchange="toggleBundleInputs('${item.id}')" class="bundle-chk rounded text-pink-500 focus:ring-pink-400">
+            <span class="font-medium text-slate-700 truncate">${item.emoji || '✨'} ${item.name}</span>
           </label>
-          <div class="flex items-center gap-1">
-            <span class="text-[10px] text-slate-400">Bundle Qty:</span>
-            <input type="number" id="bundle-qty-${item.id}" min="1" value="1" disabled class="bundle-qty-input w-16 p-1 border border-slate-200 rounded text-right bg-slate-100">
+          <div class="flex items-center gap-2">
+            <div class="text-right">
+              <span class="text-[9px] text-slate-400 block">Qty to Add</span>
+              <input type="number" id="bundle-qty-${item.id}" min="1" value="1" disabled class="bundle-input-${item.id} w-14 p-1 border border-slate-200 rounded text-right bg-slate-100 text-xs">
+            </div>
+            <div class="text-right">
+              <span class="text-[9px] text-slate-400 block">Weight (Share)</span>
+              <input type="number" id="bundle-weight-${item.id}" min="0.1" step="0.1" value="1" disabled class="bundle-input-${item.id} w-14 p-1 border border-slate-200 rounded text-right bg-slate-100 text-xs" title="Cost weight multiplier per unit">
+            </div>
           </div>
         `;
         container.appendChild(div);
       });
     }
 
-    function toggleBundleQtyInput(id) {
+    function toggleBundleInputs(id) {
       const chk = document.querySelector(`.bundle-chk[value="${id}"]`);
-      const qtyInput = document.getElementById(`bundle-qty-${id}`);
-      if (chk && qtyInput) {
-        qtyInput.disabled = !chk.checked;
-        qtyInput.className = `bundle-qty-input w-16 p-1 border rounded text-right ${chk.checked ? 'bg-white border-pink-300 font-bold' : 'bg-slate-100 border-slate-200'}`;
-      }
+      const inputs = document.querySelectorAll(`.bundle-input-${id}`);
+      inputs.forEach(input => {
+        input.disabled = !chk.checked;
+        input.className = `bundle-input-${id} w-14 p-1 border rounded text-right text-xs ${chk.checked ? 'bg-white border-pink-300 font-bold' : 'bg-slate-100 border-slate-200'}`;
+      });
     }
 
     function calculateBundleAllocation() {
@@ -891,17 +898,24 @@
         return;
       }
 
-      let totalUnitsInBundle = 0;
+      let totalWeightUnits = 0;
       const itemsToUpdate = [];
 
       selectedCheckboxes.forEach(cb => {
         const id = cb.value;
         const qty = parseInt(document.getElementById(`bundle-qty-${id}`).value) || 1;
-        totalUnitsInBundle += qty;
-        itemsToUpdate.push({ id, bundleQty: qty });
+        const weightPerItem = parseFloat(document.getElementById(`bundle-weight-${id}`).value) || 1;
+        const lineWeight = qty * weightPerItem;
+        totalWeightUnits += lineWeight;
+        itemsToUpdate.push({ id, bundleQty: qty, lineWeight });
       });
 
-      const costPerIndividualUnit = totalBundleCost / totalUnitsInBundle;
+      if (totalWeightUnits <= 0) {
+        alert('Total weight shares must be greater than zero');
+        return;
+      }
+
+      const costPerWeightUnit = totalBundleCost / totalWeightUnits;
 
       const resultsList = document.getElementById('bundleResultsList');
       resultsList.innerHTML = '';
@@ -909,13 +923,14 @@
       itemsToUpdate.forEach(entry => {
         const item = state.inventory.find(i => i.id === entry.id);
         if (item) {
-          item.cost = parseFloat(costPerIndividualUnit.toFixed(2));
+          const totalLineCost = entry.lineWeight * costPerWeightUnit;
+          item.cost = parseFloat((totalLineCost / entry.bundleQty).toFixed(2));
           item.stock = (item.stock || 0) + entry.bundleQty;
 
           const li = document.createElement('li');
           li.className = 'py-1 flex justify-between items-center';
           li.innerHTML = `
-            <span><b>${item.emoji || ''} ${item.name}</b> (+${entry.bundleQty} added to stock)</span>
+            <span><b>${item.emoji || ''} ${item.name}</b> (+${entry.bundleQty} added, weight shares: ${entry.lineWeight})</span>
             <span>Unit Cost: <b>$${item.cost.toFixed(2)}</b></span>
           `;
           resultsList.appendChild(li);
