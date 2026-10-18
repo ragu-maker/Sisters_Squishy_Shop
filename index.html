@@ -391,16 +391,22 @@
       masterKey: localStorage.getItem('jsonbin_master_key') || ''
     };
 
-    window.onload = function() {
+window.onload = function() {
       document.getElementById('payoutDate').value = new Date().toISOString().split('T')[0];
       
-      if (syncConfig.masterKey && syncConfig.binId) {
-        fetchFromCloud();
-      } else {
-        const cached = localStorage.getItem('squishy_pos_data');
-        if (cached) {
+      // ALWAYS load local cache first so unsynced local sales aren't lost
+      const cached = localStorage.getItem('squishy_pos_data');
+      if (cached) {
+        try {
           state = JSON.parse(cached);
+        } catch (err) {
+          console.error("Error loading local cache", err);
         }
+      }
+      
+      if (syncConfig.masterKey && syncConfig.binId) {
+        fetchFromCloud(); // Will now merge local sales with cloud sales safely
+      } else {
         renderAll();
       }
     };
