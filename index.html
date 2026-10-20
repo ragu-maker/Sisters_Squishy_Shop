@@ -890,8 +890,7 @@ window.onload = function() {
         input.className = `bundle-input-${id} w-14 p-1 border rounded text-right text-xs ${chk.checked ? 'bg-white border-pink-300 font-bold' : 'bg-slate-100 border-slate-200'}`;
       });
     }
-
-    function calculateBundleAllocation() {
+function calculateBundleAllocation() {
       const totalBundleCost = parseFloat(document.getElementById('bundleTotalCost').value);
       if (isNaN(totalBundleCost) || totalBundleCost <= 0) {
         alert('Please enter a valid total bundle cost');
@@ -930,14 +929,27 @@ window.onload = function() {
         const item = state.inventory.find(i => i.id === entry.id);
         if (item) {
           const totalLineCost = entry.lineWeight * costPerWeightUnit;
-          item.cost = parseFloat((totalLineCost / entry.bundleQty).toFixed(2));
-          item.stock = (item.stock || 0) + entry.bundleQty;
+          const newBatchUnitCost = totalLineCost / entry.bundleQty;
+
+          const oldStock = item.stock || 0;
+          const oldCost = item.cost || 0;
+
+          // Calculate weighted average if there is existing stock and a prior unit cost
+          if (oldStock > 0 && oldCost > 0) {
+            const totalValue = (oldStock * oldCost) + (entry.bundleQty * newBatchUnitCost);
+            const totalStock = oldStock + entry.bundleQty;
+            item.cost = parseFloat((totalValue / totalStock).toFixed(2));
+          } else {
+            item.cost = parseFloat(newBatchUnitCost.toFixed(2));
+          }
+
+          item.stock = oldStock + entry.bundleQty;
 
           const li = document.createElement('li');
           li.className = 'py-1 flex justify-between items-center';
           li.innerHTML = `
             <span><b>${item.emoji || ''} ${item.name}</b> (+${entry.bundleQty} added, weight shares: ${entry.lineWeight})</span>
-            <span>Unit Cost: <b>$${item.cost.toFixed(2)}</b></span>
+            <span>New Avg Unit Cost: <b>$${item.cost.toFixed(2)}</b></span>
           `;
           resultsList.appendChild(li);
         }
